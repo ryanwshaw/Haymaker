@@ -14,7 +14,20 @@ struct GolfTrackerApp: App {
         do {
             return try ModelContainer(for: schema, configurations: [config])
         } catch {
-            fatalError("Could not create ModelContainer: \(error)")
+            // Schema changed — delete the old store and recreate
+            let url = config.url
+            try? FileManager.default.removeItem(at: url)
+            // Also remove journal/wal files
+            let dir = url.deletingLastPathComponent()
+            let name = url.lastPathComponent
+            for suffix in ["-shm", "-wal"] {
+                try? FileManager.default.removeItem(at: dir.appendingPathComponent(name + suffix))
+            }
+            do {
+                return try ModelContainer(for: schema, configurations: [config])
+            } catch {
+                fatalError("Could not create ModelContainer after reset: \(error)")
+            }
         }
     }()
 
