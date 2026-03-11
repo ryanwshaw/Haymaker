@@ -79,16 +79,21 @@ struct StatsEngine {
         return variance.squareRoot()
     }
 
-    // MARK: - Club Distances
+    // MARK: - Approach by Distance
 
-    var clubDistances: [ClubDistanceStat] {
-        let withData = allScores.filter { !$0.approachClubRaw.isEmpty && $0.approachDistance > 0 }
-        let grouped = Dictionary(grouping: withData) { $0.approachClubRaw }
-        return grouped.map { club, scores in
-            let total = scores.map(\.approachDistance).reduce(0, +)
-            return ClubDistanceStat(club: club, avgYards: total / scores.count, count: scores.count)
+    static let distanceBuckets: [Int] = {
+        var buckets = Array(stride(from: 20, through: 270, by: 10))
+        buckets.append(275)
+        return buckets
+    }()
+
+    var approachByDistance: [ApproachDistanceStat] {
+        let withData = allScores.filter { $0.approachDistance > 0 }
+        let grouped = Dictionary(grouping: withData) { $0.approachDistance }
+        return Self.distanceBuckets.compactMap { bucket in
+            guard let scores = grouped[bucket], !scores.isEmpty else { return nil }
+            return ApproachDistanceStat(bucket: bucket, scores: scores)
         }
-        .sorted { $0.avgYards > $1.avgYards }
     }
 
     // MARK: - Factory
@@ -177,11 +182,30 @@ struct HoleStat {
     }
 }
 
-// MARK: - Club Distance Stat
+// MARK: - Approach Distance Stat
 
-struct ClubDistanceStat: Identifiable {
-    var id: String { club }
-    let club: String
-    let avgYards: Int
-    let count: Int
+struct ApproachDistanceStat: Identifiable {
+    var id: Int { bucket }
+    let bucket: Int
+    let scores: [HoleScore]
+
+    var label: String { bucket == 275 ? "275+" : "\(bucket) yds" }
+    var count: Int { scores.count }
+
+    var greenPct: Double {
+        guard !scores.isEmpty else { return 0 }
+        return Double(scores.filter(\.hitGreen).count) / Double(scores.count) * 100
+    }
+
+    func resultPct(_ result: String) -> Double {
+        guard !scores.isEmpty else { return 0 }
+        return Double(scores.filter { $0.approachResultRaw == result }.count) / Double(scores.count) * 100
+    }
+
+    var greenCount: Int { scores.filter(\.hitGreen).count }
+    var shortCount: Int { scores.filter { $0.approachResultRaw == "short" }.count }
+    var longCount: Int { scores.filter { $0.approachResultRaw == "long" }.count }
+    var leftCount: Int { scores.filter { $0.approachResultRaw == "left" }.count }
+    var rightCount: Int { scores.filter { $0.approachResultRaw == "right" }.count }
+    var bunkerCount: Int { scores.filter { $0.approachResultRaw == "bunker" }.count }
 }

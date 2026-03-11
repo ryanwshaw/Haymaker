@@ -25,7 +25,7 @@ struct StatsView: View {
                                 overviewCard
                                 scoringBreakdown
                                 heatMapSection
-                                clubDistanceCard
+                                approachByDistanceCard
                                 Color.clear.frame(height: 16)
                             }
                         }
@@ -270,16 +270,16 @@ struct StatsView: View {
         }
     }
 
-    // MARK: - Club Distances
+    // MARK: - Approach by Distance
 
-    private var clubDistanceCard: some View {
+    private var approachByDistanceCard: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Approach by club")
+            Text("Approach by distance")
                 .font(.subheadline.bold())
                 .foregroundStyle(.secondary)
                 .padding(.leading, 4)
 
-            let items = engine.clubDistances
+            let items = engine.approachByDistance
             if items.isEmpty {
                 HStack {
                     Spacer()
@@ -292,31 +292,47 @@ struct StatsView: View {
                 .background(AppTheme.cardBackground, in: RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
                 .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
             } else {
-                VStack(spacing: 1) {
-                    ForEach(Array(items.enumerated()), id: \.element.club) { i, item in
-                        HStack {
-                            Text(item.club)
-                                .font(.subheadline.bold())
-                            Spacer()
-                            Text("\(item.avgYards) yds")
-                                .font(.subheadline.monospacedDigit())
-                                .foregroundStyle(AppTheme.fairwayGreen)
-                            Text("(\(item.count)x)")
-                                .font(.caption)
-                                .foregroundStyle(.tertiary)
+                VStack(spacing: 0) {
+                    ForEach(Array(items.enumerated()), id: \.element.id) { i, item in
+                        NavigationLink {
+                            ApproachDistanceDetailView(stat: item)
+                        } label: {
+                            approachRow(item: item)
                         }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
-                        .background(AppTheme.cardBackground)
+                        .buttonStyle(.plain)
+
                         if i < items.count - 1 {
                             Divider().padding(.leading, 14)
-                                .background(AppTheme.cardBackground)
                         }
                     }
                 }
+                .background(AppTheme.cardBackground)
                 .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
                 .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
             }
         }
+    }
+
+    private func approachRow(item: ApproachDistanceStat) -> some View {
+        HStack(spacing: 10) {
+            Text(item.label)
+                .font(.subheadline.bold())
+                .frame(width: 64, alignment: .leading)
+            Text("\(item.count)x")
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(.tertiary)
+            Spacer()
+            Text(String(format: "%.0f%%", item.greenPct))
+                .font(.subheadline.bold().monospacedDigit())
+                .foregroundStyle(item.greenPct > 50 ? AppTheme.fairwayGreen : (item.greenPct > 25 ? AppTheme.bogey : AppTheme.double))
+            Text("GIR")
+                .font(.system(size: 9, weight: .bold))
+                .foregroundStyle(.tertiary)
+            Image(systemName: "chevron.right")
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(.quaternary)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 11)
     }
 }
