@@ -10,24 +10,28 @@ struct StatsView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
+            Group {
                 if completedRounds.isEmpty {
-                    emptyState
-                } else {
-                    VStack(spacing: 18) {
-                        teeFilter
-                        if engine.roundCount == 0 {
-                            noDataForTee
-                        } else {
-                            overviewCard
-                            scoringBreakdown
-                            heatMapSection
-                            clubDistanceCard
-                            Color.clear.frame(height: 16)
-                        }
+                    ScrollView {
+                        emptyState
                     }
-                    .padding()
-                    .animation(.spring(response: 0.35), value: selectedTee)
+                } else {
+                    ScrollView {
+                        VStack(spacing: 18) {
+                            teeFilter
+                            if engine.roundCount == 0 {
+                                noDataForTee
+                            } else {
+                                overviewCard
+                                scoringBreakdown
+                                heatMapSection
+                                clubDistanceCard
+                                Color.clear.frame(height: 16)
+                            }
+                        }
+                        .padding()
+                        .animation(.spring(response: 0.35), value: selectedTee)
+                    }
                 }
             }
             .background(Color(.systemGroupedBackground))

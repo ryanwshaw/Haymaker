@@ -2,9 +2,14 @@ import Foundation
 
 enum Club: String, CaseIterable, Codable {
     case driver = "Driver"
+    case drivingIron = "Driving Iron"
     case threeWood = "3 Wood"
     case fiveWood = "5 Wood"
     case sevenWood = "7 Wood"
+    case twoHybrid = "2 Hybrid"
+    case threeHybrid = "3 Hybrid"
+    case fourHybrid = "4 Hybrid"
+    case fiveHybrid = "5 Hybrid"
     case hybrid = "Hybrid"
     case threeIron = "3 Iron"
     case fourIron = "4 Iron"

@@ -8,6 +8,7 @@ struct HomeView: View {
     @State private var activeRound: Round?
     @State private var showActiveRound = false
     @State private var showTeeSelector = false
+    @State private var showMockConfirm = false
 
     private var completedRounds: [Round] { allRounds.filter(\.isComplete) }
     private var incompleteRounds: [Round] { allRounds.filter { !$0.isComplete } }
@@ -23,7 +24,10 @@ struct HomeView: View {
                                 .transition(.move(edge: .top).combined(with: .opacity))
                         }
                         newRoundButton
+
                         if !completedRounds.isEmpty {
+                            lastRoundCard
+                            trendCard
                             completedSection
                         }
                     }
@@ -50,14 +54,18 @@ struct HomeView: View {
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    if completedRounds.isEmpty {
-                        Button {
-                            MockDataGenerator.generate(in: modelContext)
-                            Haptics.success()
-                        } label: {
-                            Image(systemName: "wand.and.stars")
-                                .foregroundStyle(AppTheme.gold)
+                    Menu {
+                        if completedRounds.isEmpty {
+                            Button {
+                                MockDataGenerator.generate(in: modelContext)
+                                Haptics.success()
+                            } label: {
+                                Label("Load sample data", systemImage: "wand.and.stars")
+                            }
                         }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                            .foregroundStyle(.white.opacity(0.8))
                     }
                 }
             }
@@ -85,9 +93,9 @@ struct HomeView: View {
     // MARK: - Hero Header
 
     private var heroHeader: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 14) {
             Text("Haymaker")
-                .font(.system(size: 28, weight: .bold, design: .serif))
+                .font(.system(size: 30, weight: .bold, design: .serif))
                 .foregroundStyle(.white)
 
             if completedRounds.isEmpty {
@@ -101,22 +109,33 @@ struct HomeView: View {
                 }
                 .padding(.bottom, 8)
             } else {
-                let avg = Double(completedRounds.map(\.totalScore).reduce(0, +)) / Double(completedRounds.count)
-                let avgPutts = Double(completedRounds.map(\.totalPutts).reduce(0, +)) / Double(completedRounds.count)
-                HStack(spacing: 0) {
-                    heroStat(value: String(format: "%.0f", avg), label: "AVG SCORE")
-                    heroDivider
-                    heroStat(value: String(format: "%.0f", avgPutts), label: "AVG PUTTS")
-                    heroDivider
-                    heroStat(value: "\(completedRounds.count)", label: "ROUNDS")
-                }
-                .padding(.bottom, 4)
+                heroStats
+                    .padding(.bottom, 4)
             }
         }
         .padding(.top, 16)
         .padding(.bottom, 20)
         .frame(maxWidth: .infinity)
-        .background(AppTheme.headerGradient)
+        .background(
+            LinearGradient(colors: [AppTheme.darkGreen, AppTheme.fairwayGreen, AppTheme.darkGreen.opacity(0.9)],
+                           startPoint: .topLeading, endPoint: .bottomTrailing)
+        )
+    }
+
+    private var heroStats: some View {
+        let avg = Double(completedRounds.map(\.totalScore).reduce(0, +)) / Double(completedRounds.count)
+        let avgPutts = Double(completedRounds.map(\.totalPutts).reduce(0, +)) / Double(completedRounds.count)
+        let best = completedRounds.map(\.totalScore).min() ?? 0
+
+        return HStack(spacing: 0) {
+            heroStat(value: String(format: "%.0f", avg), label: "AVG")
+            heroDivider
+            heroStat(value: "\(best)", label: "BEST")
+            heroDivider
+            heroStat(value: String(format: "%.0f", avgPutts), label: "PUTTS")
+            heroDivider
+            heroStat(value: "\(completedRounds.count)", label: "ROUNDS")
+        }
     }
 
     private func heroStat(value: String, label: String) -> some View {
@@ -171,7 +190,11 @@ struct HomeView: View {
             }
             .padding(16)
             .background(AppTheme.cardBackground, in: RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
-            .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
+            .overlay(
+                RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
+                    .stroke(AppTheme.fairwayGreen.opacity(0.3), lineWidth: 1)
+            )
+            .shadow(color: AppTheme.fairwayGreen.opacity(0.1), radius: 8, y: 2)
         }
         .buttonStyle(.plain)
     }
@@ -200,6 +223,177 @@ struct HomeView: View {
         .buttonStyle(.plain)
     }
 
+    // MARK: - Last Round Card
+
+    private var lastRoundCard: some View {
+        let last = completedRounds[0]
+        let scores = last.sortedScores
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Last round")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.secondary)
+                Spacer()
+                HStack(spacing: 5) {
+                    Circle().fill(last.tee.color).frame(width: 7, height: 7)
+                    Text(last.date.formatted(date: .abbreviated, time: .omitted))
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text("\(last.totalScore)")
+                    .font(.system(size: 40, weight: .black, design: .rounded))
+                Text(last.scoreToParString)
+                    .font(.title3.bold())
+                    .foregroundStyle(AppTheme.scoreColor(last.scoreToPar))
+                Spacer()
+                VStack(alignment: .trailing, spacing: 4) {
+                    miniStatPill(icon: "flag.fill", value: String(format: "%.0f%%", last.fairwayPct), label: "FWY")
+                    miniStatPill(icon: "circle.fill", value: String(format: "%.0f%%", last.girPct), label: "GIR")
+                    miniStatPill(icon: "smallcircle.filled.circle", value: "\(last.totalPutts)", label: "PUTTS")
+                }
+            }
+
+            miniScorecard(scores: scores, par: Haymaker.holes.map(\.par))
+        }
+        .padding(16)
+        .background(AppTheme.cardBackground, in: RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
+        .shadow(color: .black.opacity(0.06), radius: 10, y: 3)
+    }
+
+    private func miniStatPill(icon: String, value: String, label: String) -> some View {
+        HStack(spacing: 4) {
+            Text(label)
+                .font(.system(size: 9, weight: .bold))
+                .foregroundStyle(.tertiary)
+            Text(value)
+                .font(.system(size: 12, weight: .bold).monospacedDigit())
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private func miniScorecard(scores: [HoleScore], par: [Int]) -> some View {
+        VStack(spacing: 3) {
+            miniScorecardRow(label: "OUT", scores: Array(scores.prefix(9)), pars: Array(par.prefix(9)))
+            miniScorecardRow(label: "IN", scores: Array(scores.suffix(9)), pars: Array(par.suffix(9)))
+        }
+    }
+
+    private func miniScorecardRow(label: String, scores: [HoleScore], pars: [Int]) -> some View {
+        HStack(spacing: 3) {
+            Text(label)
+                .font(.system(size: 8, weight: .heavy))
+                .foregroundStyle(.tertiary)
+                .frame(width: 18)
+            ForEach(Array(scores.enumerated()), id: \.element.holeNumber) { i, score in
+                let toPar = score.score - pars[i]
+                Text("\(score.score)")
+                    .font(.system(size: 10, weight: .bold, design: .rounded).monospacedDigit())
+                    .foregroundStyle(colorForToPar(toPar))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 22)
+                    .background(backgroundForToPar(toPar), in: RoundedRectangle(cornerRadius: 4))
+            }
+        }
+    }
+
+    private func colorForToPar(_ toPar: Int) -> Color {
+        switch toPar {
+        case ...(-2): return .white
+        case -1: return .white
+        case 0: return .primary
+        case 1: return .white
+        default: return .white
+        }
+    }
+
+    private func backgroundForToPar(_ toPar: Int) -> Color {
+        switch toPar {
+        case ...(-2): return AppTheme.eagle
+        case -1: return AppTheme.birdie
+        case 0: return Color(.systemGray6)
+        case 1: return AppTheme.bogey
+        default: return AppTheme.double
+        }
+    }
+
+    // MARK: - Trend Card
+
+    private var trendCard: some View {
+        let recent = Array(completedRounds.prefix(10).reversed())
+        guard recent.count >= 2 else { return AnyView(EmptyView()) }
+
+        let scores = recent.map(\.totalScore)
+        let minScore = (scores.min() ?? 70) - 2
+        let maxScore = (scores.max() ?? 100) + 2
+        let range = Double(max(maxScore - minScore, 1))
+
+        return AnyView(
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("Scoring trend")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text("Last \(recent.count) rounds")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+                GeometryReader { geo in
+                    let w = geo.size.width
+                    let h: CGFloat = 60
+                    let stepX = w / CGFloat(scores.count - 1)
+
+                    let points = scores.enumerated().map { i, s in
+                        CGPoint(x: stepX * CGFloat(i),
+                                y: h - (CGFloat(s - minScore) / CGFloat(range)) * h)
+                    }
+
+                    ZStack {
+                        Path { path in
+                            path.move(to: CGPoint(x: points[0].x, y: h))
+                            path.addLine(to: points[0])
+                            for pt in points.dropFirst() { path.addLine(to: pt) }
+                            path.addLine(to: CGPoint(x: points.last!.x, y: h))
+                            path.closeSubpath()
+                        }
+                        .fill(
+                            LinearGradient(colors: [AppTheme.fairwayGreen.opacity(0.15), AppTheme.fairwayGreen.opacity(0.02)],
+                                           startPoint: .top, endPoint: .bottom)
+                        )
+
+                        Path { path in
+                            path.move(to: points[0])
+                            for pt in points.dropFirst() { path.addLine(to: pt) }
+                        }
+                        .stroke(AppTheme.fairwayGreen, style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
+
+                        ForEach(Array(points.enumerated()), id: \.offset) { i, pt in
+                            Circle()
+                                .fill(AppTheme.fairwayGreen)
+                                .frame(width: 6, height: 6)
+                                .position(pt)
+                        }
+
+                        if let lastPt = points.last, let lastScore = scores.last {
+                            Text("\(lastScore)")
+                                .font(.system(size: 10, weight: .bold).monospacedDigit())
+                                .foregroundStyle(AppTheme.fairwayGreen)
+                                .position(x: lastPt.x, y: lastPt.y - 12)
+                        }
+                    }
+                    .frame(height: h)
+                }
+                .frame(height: 60)
+            }
+            .padding(16)
+            .background(AppTheme.cardBackground, in: RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
+            .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
+        )
+    }
+
     // MARK: - Completed
 
     private var completedSection: some View {
@@ -213,34 +407,21 @@ struct HomeView: View {
             .padding(.leading, 4)
             .padding(.top, 4)
 
-            VStack(spacing: 1) {
+            VStack(spacing: 0) {
                 ForEach(Array(completedRounds.enumerated()), id: \.element.id) { i, round in
                     NavigationLink {
                         RoundDetailView(round: round)
                     } label: {
                         RoundRowView(round: round)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 12)
                     }
                     .buttonStyle(.plain)
-                    .background(AppTheme.cardBackground)
-                    .contextMenu {
-                        Button(role: .destructive) {
-                            withAnimation(.spring(response: 0.35)) {
-                                modelContext.delete(round)
-                                try? modelContext.save()
-                            }
-                            Haptics.light()
-                        } label: {
-                            Label("Delete round", systemImage: "trash")
-                        }
-                    }
+
                     if i < completedRounds.count - 1 {
-                        Divider().padding(.leading, 16)
-                            .background(AppTheme.cardBackground)
+                        Divider().padding(.leading, 60)
                     }
                 }
             }
+            .background(AppTheme.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
             .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
         }
@@ -328,42 +509,74 @@ struct RoundRowView: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(spacing: 4) {
+                Text("\(round.totalScore)")
+                    .font(.system(size: 24, weight: .black, design: .rounded))
+                Text(round.scoreToParString)
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(AppTheme.scoreColor(round.scoreToPar))
+            }
+            .frame(width: 50)
+
+            VStack(alignment: .leading, spacing: 5) {
                 Text(round.date.formatted(date: .abbreviated, time: .omitted))
                     .font(.subheadline.bold())
                 HStack(spacing: 6) {
-                    Circle().fill(round.tee.color).frame(width: 8, height: 8)
+                    Circle().fill(round.tee.color).frame(width: 7, height: 7)
                     Text(round.tee.rawValue)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+
+                HStack(spacing: 0) {
+                    ForEach(round.sortedScores, id: \.holeNumber) { score in
+                        let toPar = score.scoreToPar
+                        RoundedRectangle(cornerRadius: 1.5)
+                            .fill(dotColor(toPar))
+                            .frame(width: 4, height: toPar <= -1 ? 10 : (toPar == 0 ? 6 : min(CGFloat(toPar) * 4 + 6, 14)))
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .frame(height: 14, alignment: .bottom)
             }
+
             Spacer()
-            HStack(spacing: 12) {
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(String(format: "%.0f%%", round.fairwayPct))
-                        .font(.caption.monospacedDigit())
-                        .foregroundStyle(.secondary)
-                    Text("FWY")
-                        .font(.system(size: 9, weight: .medium))
-                        .foregroundStyle(.tertiary)
-                }
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("\(round.totalPutts)")
-                        .font(.caption.monospacedDigit())
-                        .foregroundStyle(.secondary)
-                    Text("PUTTS")
-                        .font(.system(size: 9, weight: .medium))
-                        .foregroundStyle(.tertiary)
-                }
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("\(round.totalScore)")
-                        .font(.title3.bold().monospacedDigit())
-                    Text(round.scoreToParString)
-                        .font(.caption.bold())
-                        .foregroundStyle(AppTheme.scoreColor(round.scoreToPar))
+
+            VStack(alignment: .trailing, spacing: 4) {
+                HStack(spacing: 10) {
+                    VStack(alignment: .trailing, spacing: 1) {
+                        Text(String(format: "%.0f%%", round.fairwayPct))
+                            .font(.system(size: 11, weight: .semibold).monospacedDigit())
+                        Text("FWY")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundStyle(.tertiary)
+                    }
+                    VStack(alignment: .trailing, spacing: 1) {
+                        Text("\(round.totalPutts)")
+                            .font(.system(size: 11, weight: .semibold).monospacedDigit())
+                        Text("PUTTS")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundStyle(.tertiary)
+                    }
                 }
             }
+            .foregroundStyle(.secondary)
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(.quaternary)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+    }
+
+    private func dotColor(_ toPar: Int) -> Color {
+        switch toPar {
+        case ...(-2): return AppTheme.eagle
+        case -1: return AppTheme.birdie
+        case 0: return Color(.systemGray4)
+        case 1: return AppTheme.bogey
+        default: return AppTheme.double
         }
     }
 }
