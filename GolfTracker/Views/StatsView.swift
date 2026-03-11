@@ -9,37 +9,31 @@ struct StatsView: View {
     private var engine: StatsEngine { StatsEngine.filtered(rounds: completedRounds, tee: selectedTee) }
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if completedRounds.isEmpty {
-                    ScrollView {
-                        emptyState
-                    }
-                } else {
-                    ScrollView {
-                        VStack(spacing: 18) {
-                            teeFilter
-                            if engine.roundCount == 0 {
-                                noDataForTee
-                            } else {
-                                overviewCard
-                                scoringBreakdown
-                                heatMapSection
-                                approachByDistanceCard
-                                Color.clear.frame(height: 16)
-                            }
+        Group {
+            if completedRounds.isEmpty {
+                ScrollView {
+                    emptyState
+                }
+            } else {
+                ScrollView {
+                    VStack(spacing: 18) {
+                        teeFilter
+                        if engine.roundCount == 0 {
+                            noDataForTee
+                        } else {
+                            overviewCard
+                            scoringBreakdown
+                            heatMapSection
+                            approachByDistanceCard
+                            Color.clear.frame(height: 16)
                         }
-                        .padding()
-                        .animation(.spring(response: 0.35), value: selectedTee)
                     }
+                    .padding()
+                    .animation(.spring(response: 0.35), value: selectedTee)
                 }
             }
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle("Stats")
-            .toolbarBackground(AppTheme.darkGreen, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
         }
+        .background(Color(.systemGroupedBackground))
     }
 
     // MARK: - Empty States

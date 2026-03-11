@@ -8,68 +8,33 @@ struct HomeView: View {
     @State private var activeRound: Round?
     @State private var showActiveRound = false
     @State private var showTeeSelector = false
-    @State private var showMockConfirm = false
 
     private var completedRounds: [Round] { allRounds.filter(\.isComplete) }
     private var incompleteRounds: [Round] { allRounds.filter { !$0.isComplete } }
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 0) {
-                    heroHeader
-                    VStack(spacing: 16) {
-                        if let active = incompleteRounds.first {
-                            inProgressCard(active)
-                                .transition(.move(edge: .top).combined(with: .opacity))
-                        }
-                        newRoundButton
+        ScrollView {
+            VStack(spacing: 0) {
+                heroHeader
+                VStack(spacing: 16) {
+                    if let active = incompleteRounds.first {
+                        inProgressCard(active)
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                    }
+                    newRoundButton
 
-                        if !completedRounds.isEmpty {
-                            lastRoundCard
-                            trendCard
-                            completedSection
-                        }
-                    }
-                    .padding(.horizontal)
-                    .padding(.top, 16)
-                    .padding(.bottom, 32)
-                }
-            }
-            .background(Color(.systemGroupedBackground))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        if completedRounds.isEmpty {
-                            Button {
-                                MockDataGenerator.generate(in: modelContext)
-                                Haptics.success()
-                            } label: {
-                                Label("Load sample data", systemImage: "wand.and.stars")
-                            }
-                        }
-                        if !allRounds.isEmpty {
-                            Button(role: .destructive) {
-                                withAnimation(.spring(response: 0.35)) {
-                                    for r in allRounds { modelContext.delete(r) }
-                                    try? modelContext.save()
-                                }
-                                Haptics.medium()
-                            } label: {
-                                Label("Delete all rounds", systemImage: "trash")
-                            }
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
-                            .foregroundStyle(.white.opacity(0.8))
+                    if !completedRounds.isEmpty {
+                        lastRoundCard
+                        trendCard
+                        completedSection
                     }
                 }
+                .padding(.horizontal)
+                .padding(.top, 16)
+                .padding(.bottom, 32)
             }
-            .toolbarBackground(AppTheme.darkGreen, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
         }
+        .background(Color(.systemGroupedBackground))
         .fullScreenCover(isPresented: $showActiveRound, onDismiss: {
             activeRound = nil
         }) {
@@ -90,11 +55,7 @@ struct HomeView: View {
     // MARK: - Hero Header
 
     private var heroHeader: some View {
-        VStack(spacing: 14) {
-            Text("Haymaker")
-                .font(.system(size: 30, weight: .bold, design: .serif))
-                .foregroundStyle(.white)
-
+        VStack(spacing: 10) {
             if completedRounds.isEmpty {
                 VStack(spacing: 8) {
                     Image(systemName: "figure.golf")
@@ -104,14 +65,11 @@ struct HomeView: View {
                         .font(.subheadline)
                         .foregroundStyle(.white.opacity(0.7))
                 }
-                .padding(.bottom, 8)
             } else {
                 heroStats
-                    .padding(.bottom, 4)
             }
         }
-        .padding(.top, 16)
-        .padding(.bottom, 20)
+        .padding(.vertical, 16)
         .frame(maxWidth: .infinity)
         .background(
             LinearGradient(colors: [AppTheme.darkGreen, AppTheme.fairwayGreen, AppTheme.darkGreen.opacity(0.9)],
