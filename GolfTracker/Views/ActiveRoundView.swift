@@ -29,7 +29,7 @@ struct ActiveRoundView: View {
                     Spacer()
                 } else {
                     holePicker
-                    HoleEntryView(score: sortedScores[currentHoleIndex], tee: round.tee)
+                    HoleEntryView(score: sortedScores[currentHoleIndex], round: round)
                 }
             }
             .background(Color(.systemGroupedBackground))
@@ -62,12 +62,13 @@ struct ActiveRoundView: View {
                 }
                 ToolbarItem(placement: .principal) {
                     if !sortedScores.isEmpty {
-                        let info = Haymaker.hole(currentHoleIndex + 1)
+                        let score = sortedScores[currentHoleIndex]
+                        let info = score.courseHoleInfo()
                         VStack(spacing: 0) {
-                            Text(info.name)
+                            Text(info.name.isEmpty ? "Hole \(info.number)" : info.name)
                                 .font(.subheadline.bold())
                                 .foregroundStyle(.white)
-                            Text("\(round.tee.rawValue) · \(info.yardage(for: round.tee)) yds")
+                            Text("\(round.teeRaw) · \(info.yardage(for: round.teeRaw)) yds")
                                 .font(.caption2)
                                 .foregroundStyle(.white.opacity(0.6))
                         }
@@ -133,7 +134,7 @@ struct ActiveRoundView: View {
     private func holePickerButton(index i: Int, score: HoleScore) -> some View {
         let isCurrent = currentHoleIndex == i
         let hasData = !score.teeResultRaw.isEmpty
-        let toPar = score.score - score.holeInfo.par
+        let toPar = score.score - score.par
 
         return Button {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {

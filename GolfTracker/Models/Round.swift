@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import SwiftData
 
 @Model
@@ -7,20 +8,17 @@ final class Round {
     var notes: String
     var isComplete: Bool
     var teeRaw: String
+    var course: Course?
 
     @Relationship(deleteRule: .cascade, inverse: \HoleScore.round)
     var scores: [HoleScore] = []
 
-    init(date: Date = .now, notes: String = "", isComplete: Bool = false, tee: Tee = .white) {
+    init(date: Date = .now, notes: String = "", isComplete: Bool = false, tee: String = "White", course: Course? = nil) {
         self.date = date
         self.notes = notes
         self.isComplete = isComplete
-        self.teeRaw = tee.rawValue
-    }
-
-    var tee: Tee {
-        get { Tee(rawValue: teeRaw) ?? .white }
-        set { teeRaw = newValue.rawValue }
+        self.teeRaw = tee
+        self.course = course
     }
 
     var sortedScores: [HoleScore] {
@@ -29,7 +27,13 @@ final class Round {
 
     var totalScore: Int { scores.map(\.score).reduce(0, +) }
     var totalPutts: Int { scores.map(\.putts).reduce(0, +) }
-    var totalPar: Int { 72 }
+
+    var totalPar: Int {
+        let fromScores = scores.map(\.par).reduce(0, +)
+        if fromScores > 0 { return fromScores }
+        return course?.totalPar ?? 72
+    }
+
     var scoreToPar: Int { totalScore - totalPar }
 
     var scoreToParString: String {
@@ -56,5 +60,13 @@ final class Round {
     var girPct: Double {
         guard !scores.isEmpty else { return 0 }
         return Double(girCount) / Double(scores.count) * 100
+    }
+
+    var displayTeeColor: Color {
+        GolfTracker.teeColor(for: teeRaw, in: course)
+    }
+
+    var courseName: String {
+        course?.name ?? "Haymaker"
     }
 }

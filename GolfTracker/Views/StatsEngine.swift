@@ -61,13 +61,18 @@ struct StatsEngine {
 
     // MARK: - Per-Hole Stats
 
+    var holeCount: Int {
+        let maxHole = allScores.map(\.holeNumber).max() ?? 18
+        return max(maxHole, 1)
+    }
+
     func holeStat(_ holeNumber: Int) -> HoleStat {
         let forHole = allScores.filter { $0.holeNumber == holeNumber }
         return HoleStat(holeNumber: holeNumber, scores: forHole)
     }
 
     var holeStats: [HoleStat] {
-        (1...18).map { holeStat($0) }
+        (1...holeCount).map { holeStat($0) }
     }
 
     var heatMapOutlierThreshold: Double {
@@ -98,10 +103,10 @@ struct StatsEngine {
 
     // MARK: - Factory
 
-    static func filtered(rounds: [Round], tee: Tee?) -> StatsEngine {
+    static func filtered(rounds: [Round], tee: String?) -> StatsEngine {
         let filtered: [Round]
         if let tee = tee {
-            filtered = rounds.filter { $0.tee == tee }
+            filtered = rounds.filter { $0.teeRaw == tee }
         } else {
             filtered = rounds
         }
@@ -115,15 +120,18 @@ struct HoleStat {
     let holeNumber: Int
     let scores: [HoleScore]
 
-    var info: HoleInfo { Haymaker.hole(holeNumber) }
     var count: Int { scores.count }
+
+    var holePar: Int {
+        scores.first?.par ?? 4
+    }
 
     var avgScore: Double {
         guard !scores.isEmpty else { return 0 }
         return Double(scores.map(\.score).reduce(0, +)) / Double(scores.count)
     }
 
-    var avgScoreToPar: Double { avgScore - Double(info.par) }
+    var avgScoreToPar: Double { avgScore - Double(holePar) }
 
     var bestScore: Int { scores.map(\.score).min() ?? 0 }
     var worstScore: Int { scores.map(\.score).max() ?? 0 }
@@ -168,13 +176,11 @@ struct HoleStat {
         return Double(withData.map(\.approachDistance).reduce(0, +)) / Double(withData.count)
     }
 
-    // Tee result distribution (for par 4/5)
     func teeResultPct(_ result: String) -> Double {
         guard !scores.isEmpty else { return 0 }
         return Double(scores.filter { $0.teeResultRaw == result }.count) / Double(scores.count) * 100
     }
 
-    // Approach result distribution (for par 4/5)
     func approachResultPct(_ result: String) -> Double {
         let relevant = scores.filter { $0.par != 3 }
         guard !relevant.isEmpty else { return 0 }

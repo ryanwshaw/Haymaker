@@ -7,9 +7,13 @@ final class HoleScore {
     var score: Int
     var putts: Int
 
+    // Stored hole metadata (set at round creation from course data)
+    var holePar: Int
+    var holeName: String
+    var holeYardage: Int
+    var holeMensHdcp: Int
+
     // Step 1: Tee shot result
-    // Par 4/5: "fairway", "rough_left", "rough_right", "native", "bunker", "drop"
-    // Par 3: "green", "short", "long", "left", "right", "bunker"
     var teeResultRaw: String
     var teeClubRaw: String
 
@@ -17,14 +21,13 @@ final class HoleScore {
     var approachDistance: Int
 
     // Step 3: Approach result (par 4/5)
-    // "green", "short", "long", "left", "right", "bunker"
     var approachResultRaw: String
     var approachClubRaw: String
 
     // Step 4: Short game (if missed green)
     var chipClubRaw: String
 
-    // Step 5: Putts (already have putts field above)
+    // Step 5: Putts
     var firstPuttDistance: Int
 
     // Trouble / extra
@@ -37,6 +40,10 @@ final class HoleScore {
         holeNumber: Int,
         score: Int = 0,
         putts: Int = 2,
+        holePar: Int = 4,
+        holeName: String = "",
+        holeYardage: Int = 0,
+        holeMensHdcp: Int = 0,
         teeResultRaw: String = "",
         teeClubRaw: String = "",
         approachDistance: Int = 0,
@@ -50,6 +57,10 @@ final class HoleScore {
         self.holeNumber = holeNumber
         self.score = score
         self.putts = putts
+        self.holePar = holePar
+        self.holeName = holeName
+        self.holeYardage = holeYardage
+        self.holeMensHdcp = holeMensHdcp
         self.teeResultRaw = teeResultRaw
         self.teeClubRaw = teeClubRaw
         self.approachDistance = approachDistance
@@ -76,9 +87,43 @@ final class HoleScore {
         set { chipClubRaw = newValue?.rawValue ?? "" }
     }
 
-    var holeInfo: HoleInfo { Haymaker.hole(holeNumber) }
-    var par: Int { holeInfo.par }
+    /// Par for this hole. Uses stored value; falls back to Haymaker for legacy data.
+    var par: Int {
+        if holePar > 0 { return holePar }
+        if holeNumber >= 1 && holeNumber <= 18 {
+            return Haymaker.hole(holeNumber).par
+        }
+        return 4
+    }
+
     var scoreToPar: Int { score - par }
+
+    /// Builds a HoleInfo from stored metadata or falls back to Haymaker for legacy rounds.
+    var holeInfo: HoleInfo {
+        if !holeName.isEmpty {
+            return HoleInfo(
+                number: holeNumber,
+                name: holeName,
+                par: par,
+                mensHdcp: holeMensHdcp,
+                ladiesHdcp: 0,
+                yardages: [:]
+            )
+        }
+        if holeNumber >= 1 && holeNumber <= 18 {
+            return Haymaker.hole(holeNumber)
+        }
+        return HoleInfo(number: holeNumber, name: "Hole \(holeNumber)", par: par,
+                        mensHdcp: 0, ladiesHdcp: 0, yardages: [:])
+    }
+
+    /// Full hole info from the round's course, with fallback.
+    func courseHoleInfo() -> HoleInfo {
+        if let courseHole = round?.course?.hole(holeNumber) {
+            return courseHole.toHoleInfo()
+        }
+        return holeInfo
+    }
 
     var hitFairway: Bool { teeResultRaw == "fairway" }
     var hitGreen: Bool {
@@ -86,8 +131,11 @@ final class HoleScore {
         return approachResultRaw == "green"
     }
 
-    func yardage(for tee: Tee) -> Int {
-        holeInfo.yardage(for: tee)
+    func yardage(for teeName: String) -> Int {
+        if let courseHole = round?.course?.hole(holeNumber) {
+            return courseHole.yardage(for: teeName)
+        }
+        return holeInfo.yardage(for: teeName)
     }
 
     var scoreLabel: String {

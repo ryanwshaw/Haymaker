@@ -3,16 +3,24 @@ import SwiftData
 
 struct HoleDetailView: View {
     let holeNumber: Int
-    let selectedTee: Tee?
+    let selectedTee: String?
+    let course: Course?
 
     @Query(sort: \Round.date, order: .reverse) private var allRounds: [Round]
 
-    private var completedRounds: [Round] { allRounds.filter(\.isComplete) }
+    private var completedRounds: [Round] {
+        allRounds.filter { $0.isComplete && $0.course?.persistentModelID == course?.persistentModelID }
+    }
+
     private var stat: HoleStat {
         StatsEngine.filtered(rounds: completedRounds, tee: selectedTee).holeStat(holeNumber)
     }
-    private var info: HoleInfo { Haymaker.hole(holeNumber) }
-    private var displayTee: Tee { selectedTee ?? .gold }
+
+    private var info: HoleInfo {
+        course?.hole(holeNumber)?.toHoleInfo() ?? Haymaker.hole(holeNumber)
+    }
+
+    private var displayTee: String { selectedTee ?? "Gold" }
 
     var body: some View {
         ScrollView {
@@ -52,7 +60,7 @@ struct HoleDetailView: View {
                     Text("#\(holeNumber)")
                         .font(.system(size: 36, weight: .black, design: .rounded))
                         .foregroundStyle(AppTheme.fairwayGreen)
-                    Text(info.name)
+                    Text(info.name.isEmpty ? "Hole \(holeNumber)" : info.name)
                         .font(.title3.bold())
                 }
                 Spacer()
@@ -62,9 +70,11 @@ struct HoleDetailView: View {
                     Text("\(info.yardage(for: displayTee)) yds")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                    Text("Hdcp \(info.mensHdcp)")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                    if info.mensHdcp > 0 {
+                        Text("Hdcp \(info.mensHdcp)")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
                 }
             }
         }
@@ -152,12 +162,8 @@ struct HoleDetailView: View {
 
     private var offTheTeeCard: some View {
         let results: [(String, String)] = [
-            ("Fairway", "fairway"),
-            ("Rough L", "rough_left"),
-            ("Rough R", "rough_right"),
-            ("Native", "native"),
-            ("Bunker", "bunker"),
-            ("Drop", "drop"),
+            ("Fairway", "fairway"), ("Rough L", "rough_left"), ("Rough R", "rough_right"),
+            ("Native", "native"), ("Bunker", "bunker"), ("Drop", "drop"),
         ]
 
         return card(title: "Off the tee") {
@@ -182,12 +188,8 @@ struct HoleDetailView: View {
 
     private var teeToGreenPar3Card: some View {
         let results: [(String, String)] = [
-            ("Green", "green"),
-            ("Short", "short"),
-            ("Long", "long"),
-            ("Left", "left"),
-            ("Right", "right"),
-            ("Bunker", "bunker"),
+            ("Green", "green"), ("Short", "short"), ("Long", "long"),
+            ("Left", "left"), ("Right", "right"), ("Bunker", "bunker"),
         ]
 
         return card(title: "Tee shot") {
@@ -212,12 +214,8 @@ struct HoleDetailView: View {
 
     private var approachCard: some View {
         let results: [(String, String)] = [
-            ("Green", "green"),
-            ("Short", "short"),
-            ("Long", "long"),
-            ("Left", "left"),
-            ("Right", "right"),
-            ("Bunker", "bunker"),
+            ("Green", "green"), ("Short", "short"), ("Long", "long"),
+            ("Left", "left"), ("Right", "right"), ("Bunker", "bunker"),
         ]
 
         return card(title: "Approach") {

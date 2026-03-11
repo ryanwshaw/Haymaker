@@ -6,7 +6,9 @@ struct GolfTrackerApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Round.self,
-            HoleScore.self
+            HoleScore.self,
+            Course.self,
+            CourseHole.self,
         ])
         let config = ModelConfiguration(isStoredInMemoryOnly: false)
         do {
@@ -19,7 +21,17 @@ struct GolfTrackerApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onAppear { seedDefaultCourseIfNeeded() }
         }
         .modelContainer(sharedModelContainer)
+    }
+
+    private func seedDefaultCourseIfNeeded() {
+        let context = sharedModelContainer.mainContext
+        let descriptor = FetchDescriptor<Course>()
+        let count = (try? context.fetchCount(descriptor)) ?? 0
+        if count == 0 {
+            Haymaker.seed(in: context)
+        }
     }
 }

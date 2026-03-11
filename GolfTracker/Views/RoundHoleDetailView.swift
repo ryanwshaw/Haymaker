@@ -2,10 +2,11 @@ import SwiftUI
 
 struct RoundHoleDetailView: View {
     let score: HoleScore
-    let tee: Tee
+    let round: Round
 
-    private var info: HoleInfo { score.holeInfo }
-    private var isPar3: Bool { info.par == 3 }
+    private var info: HoleInfo { score.courseHoleInfo() }
+    private var isPar3: Bool { score.par == 3 }
+    private var teeName: String { round.teeRaw }
 
     var body: some View {
         ScrollView {
@@ -42,12 +43,14 @@ struct RoundHoleDetailView: View {
                 .frame(width: 50, height: 50)
                 .background(AppTheme.scoreColor(score.scoreToPar), in: RoundedRectangle(cornerRadius: 12))
             VStack(alignment: .leading, spacing: 3) {
-                Text(info.name)
+                Text(info.name.isEmpty ? "Hole \(info.number)" : info.name)
                     .font(.system(size: 18, weight: .bold, design: .serif))
                 HStack(spacing: 10) {
-                    Label("Par \(info.par)", systemImage: "flag.fill")
-                    Label("\(info.yardage(for: tee)) yds", systemImage: "ruler")
-                    Label("Hdcp \(info.mensHdcp)", systemImage: "number")
+                    Label("Par \(score.par)", systemImage: "flag.fill")
+                    Label("\(info.yardage(for: teeName)) yds", systemImage: "ruler")
+                    if info.mensHdcp > 0 {
+                        Label("Hdcp \(info.mensHdcp)", systemImage: "number")
+                    }
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)

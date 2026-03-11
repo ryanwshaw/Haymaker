@@ -3,11 +3,12 @@ import SwiftData
 
 struct HoleEntryView: View {
     @Bindable var score: HoleScore
-    let tee: Tee
+    let round: Round
     @ObservedObject private var bag = BagManager.shared
 
-    private var info: HoleInfo { score.holeInfo }
-    private var isPar3: Bool { info.par == 3 }
+    private var info: HoleInfo { score.courseHoleInfo() }
+    private var isPar3: Bool { score.par == 3 }
+    private var teeName: String { round.teeRaw }
 
     var body: some View {
         ScrollView {
@@ -44,12 +45,14 @@ struct HoleEntryView: View {
                 .background(AppTheme.fairwayGreen, in: RoundedRectangle(cornerRadius: 10))
                 .overlay(RoundedRectangle(cornerRadius: 10).stroke(AppTheme.gold, lineWidth: 1.5))
             VStack(alignment: .leading, spacing: 2) {
-                Text(info.name)
+                Text(info.name.isEmpty ? "Hole \(info.number)" : info.name)
                     .font(.system(size: 18, weight: .bold, design: .serif))
                 HStack(spacing: 10) {
-                    Label("Par \(info.par)", systemImage: "flag.fill")
-                    Label("\(info.yardage(for: tee))", systemImage: "ruler")
-                    Label("Hdcp \(info.mensHdcp)", systemImage: "number")
+                    Label("Par \(score.par)", systemImage: "flag.fill")
+                    Label("\(info.yardage(for: teeName))", systemImage: "ruler")
+                    if info.mensHdcp > 0 {
+                        Label("Hdcp \(info.mensHdcp)", systemImage: "number")
+                    }
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)

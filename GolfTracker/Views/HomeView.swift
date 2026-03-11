@@ -4,10 +4,12 @@ import SwiftData
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \Round.date, order: .reverse) private var allRounds: [Round]
+    @Query(sort: \Course.createdAt) private var courses: [Course]
 
     @State private var activeRound: Round?
     @State private var showActiveRound = false
     @State private var showTeeSelector = false
+    @State private var selectedCourse: Course?
 
     private var completedRounds: [Round] { allRounds.filter(\.isComplete) }
     private var incompleteRounds: [Round] { allRounds.filter { !$0.isComplete } }
@@ -43,12 +45,14 @@ struct HomeView: View {
             }
         }
         .sheet(isPresented: $showTeeSelector) {
-            TeeSelectionView { tee in
-                showTeeSelector = false
-                createRound(tee: tee)
+            if let course = selectedCourse ?? courses.first {
+                TeeSelectionView(course: course) { teeName in
+                    showTeeSelector = false
+                    createRound(course: course, teeName: teeName)
+                }
+                .presentationDetents([.medium])
+                .presentationCornerRadius(24)
             }
-            .presentationDetents([.medium])
-            .presentationCornerRadius(24)
         }
     }
 
@@ -132,8 +136,8 @@ struct HomeView: View {
                         .font(.headline)
                         .foregroundStyle(.primary)
                     HStack(spacing: 6) {
-                        Circle().fill(round.tee.color).frame(width: 8, height: 8)
-                        Text("\(round.tee.rawValue) · \(round.date.formatted(date: .abbreviated, time: .omitted))")
+                        Circle().fill(round.displayTeeColor).frame(width: 8, height: 8)
+                        Text("\(round.teeRaw) · \(round.courseName)")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -183,6 +187,7 @@ struct HomeView: View {
     private var lastRoundCard: some View {
         let last = completedRounds[0]
         let scores = last.sortedScores
+        let pars = scores.map(\.par)
         return VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("Last round")
@@ -190,7 +195,7 @@ struct HomeView: View {
                     .foregroundStyle(.secondary)
                 Spacer()
                 HStack(spacing: 5) {
-                    Circle().fill(last.tee.color).frame(width: 7, height: 7)
+                    Circle().fill(last.displayTeeColor).frame(width: 7, height: 7)
                     Text(last.date.formatted(date: .abbreviated, time: .omitted))
                         .font(.caption)
                         .foregroundStyle(.tertiary)
@@ -211,7 +216,7 @@ struct HomeView: View {
                 }
             }
 
-            miniScorecard(scores: scores, par: Haymaker.holes.map(\.par))
+            miniScorecard(scores: scores, par: pars)
         }
         .padding(16)
         .background(AppTheme.cardBackground, in: RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
@@ -231,8 +236,11 @@ struct HomeView: View {
 
     private func miniScorecard(scores: [HoleScore], par: [Int]) -> some View {
         VStack(spacing: 3) {
-            miniScorecardRow(label: "OUT", scores: Array(scores.prefix(9)), pars: Array(par.prefix(9)))
-            miniScorecardRow(label: "IN", scores: Array(scores.suffix(9)), pars: Array(par.suffix(9)))
+            let half = scores.count / 2
+            if half > 0 {
+                miniScorecardRow(label: "OUT", scores: Array(scores.prefix(half)), pars: Array(par.prefix(half)))
+                miniScorecardRow(label: "IN", scores: Array(scores.suffix(scores.count - half)), pars: Array(par.suffix(scores.count - half)))
+            }
         }
     }
 
@@ -243,7 +251,7 @@ struct HomeView: View {
                 .foregroundStyle(.tertiary)
                 .frame(width: 18)
             ForEach(Array(scores.enumerated()), id: \.element.holeNumber) { i, score in
-                let toPar = score.score - pars[i]
+                let toPar = i < pars.count ? score.score - pars[i] : 0
                 Text("\(score.score)")
                     .font(.system(size: 10, weight: .bold, design: .rounded).monospacedDigit())
                     .foregroundStyle(colorForToPar(toPar))
@@ -388,6 +396,7 @@ struct HomeView: View {
         if let existing = incompleteRounds.first {
             openRound(existing)
         } else {
+            selectedCourse = courses.first
             showTeeSelector = true
         }
     }
@@ -397,11 +406,19 @@ struct HomeView: View {
         showActiveRound = true
     }
 
-    private func createRound(tee: Tee) {
-        let round = Round(date: .now, isComplete: false, tee: tee)
+    private func createRound(course: Course, teeName: String) {
+        let round = Round(date: .now, isComplete: false, tee: teeName, course: course)
         modelContext.insert(round)
-        for hole in Haymaker.holes {
-            let hs = HoleScore(holeNumber: hole.number, score: hole.par, putts: 2)
+        for hole in course.sortedHoles {
+            let hs = HoleScore(
+                holeNumber: hole.holeNumber,
+                score: hole.par,
+                putts: 2,
+                holePar: hole.par,
+                holeName: hole.name,
+                holeYardage: hole.yardage(for: teeName),
+                holeMensHdcp: hole.mensHdcp
+            )
             hs.round = round
             modelContext.insert(hs)
         }
@@ -414,15 +431,16 @@ struct HomeView: View {
 // MARK: - Tee Selection
 
 struct TeeSelectionView: View {
-    var onSelect: (Tee) -> Void
+    let course: Course
+    var onSelect: (String) -> Void
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 10) {
-                ForEach(Tee.allCases, id: \.self) { tee in
+                ForEach(course.teeInfos.sorted(by: { $0.sortOrder < $1.sortOrder })) { tee in
                     Button {
                         Haptics.medium()
-                        onSelect(tee)
+                        onSelect(tee.name)
                     } label: {
                         HStack(spacing: 14) {
                             Circle()
@@ -431,10 +449,10 @@ struct TeeSelectionView: View {
                                 .overlay(Circle().stroke(.white, lineWidth: 2))
                                 .shadow(color: tee.color.opacity(0.3), radius: 4)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(tee.rawValue)
+                                Text(tee.name)
                                     .font(.headline)
                                     .foregroundStyle(.primary)
-                                Text("\(tee.totalYardage) yds · \(tee.rating)")
+                                Text("\(course.totalYardage(for: tee.name)) yds · \(tee.rating)")
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                             }
@@ -477,8 +495,8 @@ struct RoundRowView: View {
                 Text(round.date.formatted(date: .abbreviated, time: .omitted))
                     .font(.subheadline.bold())
                 HStack(spacing: 6) {
-                    Circle().fill(round.tee.color).frame(width: 7, height: 7)
-                    Text(round.tee.rawValue)
+                    Circle().fill(round.displayTeeColor).frame(width: 7, height: 7)
+                    Text("\(round.teeRaw) · \(round.courseName)")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

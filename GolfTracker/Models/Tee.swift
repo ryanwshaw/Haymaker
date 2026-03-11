@@ -1,5 +1,7 @@
 import SwiftUI
 
+/// Legacy tee enum — kept for backward compatibility with existing data.
+/// New code should use CourseTeeInfo from the Course model.
 enum Tee: String, CaseIterable, Codable {
     case silver = "Silver"
     case gold = "Gold"
@@ -17,10 +19,6 @@ enum Tee: String, CaseIterable, Codable {
         }
     }
 
-    var totalYardage: Int {
-        Haymaker.holes.compactMap { $0.yardages[self] }.reduce(0, +)
-    }
-
     var rating: String {
         switch self {
         case .silver: return "73.3/140"
@@ -30,4 +28,15 @@ enum Tee: String, CaseIterable, Codable {
         case .family: return "—"
         }
     }
+}
+
+/// Resolves a tee name to a display color, checking CourseTeeInfo first then legacy Tee enum.
+func teeColor(for name: String, in course: Course?) -> Color {
+    if let info = course?.teeInfo(named: name) {
+        return info.color
+    }
+    if let legacy = Tee(rawValue: name) {
+        return legacy.color
+    }
+    return Color(.systemGray)
 }

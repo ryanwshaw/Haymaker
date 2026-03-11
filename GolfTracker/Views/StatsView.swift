@@ -3,10 +3,20 @@ import SwiftData
 
 struct StatsView: View {
     @Query(sort: \Round.date, order: .reverse) private var allRounds: [Round]
-    @State private var selectedTee: Tee? = nil
+    @Query(sort: \Course.createdAt) private var courses: [Course]
+    @State private var selectedTee: String? = nil
 
-    private var completedRounds: [Round] { allRounds.filter(\.isComplete) }
+    private var activeCourse: Course? { courses.first }
+
+    private var completedRounds: [Round] {
+        allRounds.filter { $0.isComplete && $0.course?.persistentModelID == activeCourse?.persistentModelID }
+    }
+
     private var engine: StatsEngine { StatsEngine.filtered(rounds: completedRounds, tee: selectedTee) }
+
+    private var availableTees: [CourseTeeInfo] {
+        activeCourse?.teeInfos.sorted(by: { $0.sortOrder < $1.sortOrder }) ?? []
+    }
 
     var body: some View {
         Group {
@@ -58,7 +68,7 @@ struct StatsView: View {
             Image(systemName: "tray")
                 .font(.title)
                 .foregroundStyle(.secondary)
-            Text("No rounds from \(selectedTee?.rawValue ?? "") tees")
+            Text("No rounds from \(selectedTee ?? "") tees")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -70,19 +80,19 @@ struct StatsView: View {
     private var teeFilter: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                teeChip(label: "All", tee: nil)
-                ForEach(Tee.allCases, id: \.self) { tee in
-                    teeChip(label: tee.rawValue, tee: tee, dotColor: tee.color)
+                teeChip(label: "All", teeName: nil)
+                ForEach(availableTees) { tee in
+                    teeChip(label: tee.name, teeName: tee.name, dotColor: tee.color)
                 }
             }
         }
     }
 
-    private func teeChip(label: String, tee: Tee?, dotColor: Color? = nil) -> some View {
-        let isActive = selectedTee == tee
+    private func teeChip(label: String, teeName: String?, dotColor: Color? = nil) -> some View {
+        let isActive = selectedTee == teeName
         return Button {
             Haptics.selection()
-            selectedTee = tee
+            selectedTee = teeName
         } label: {
             HStack(spacing: 5) {
                 if let dot = dotColor {
@@ -205,11 +215,15 @@ struct StatsView: View {
             let meanDiff = stats.filter { $0.count > 0 }.map(\.avgScoreToPar).reduce(0, +)
                 / max(Double(stats.filter { $0.count > 0 }.count), 1)
 
+            let half = stats.count / 2
+
             VStack(spacing: 4) {
-                heatMapLabel("FRONT 9")
-                heatMapRow(stats: Array(stats.prefix(9)), stdDev: stdDev, meanDiff: meanDiff)
-                heatMapLabel("BACK 9")
-                heatMapRow(stats: Array(stats.suffix(9)), stdDev: stdDev, meanDiff: meanDiff)
+                if half > 0 {
+                    heatMapLabel("FRONT \(half)")
+                    heatMapRow(stats: Array(stats.prefix(half)), stdDev: stdDev, meanDiff: meanDiff)
+                    heatMapLabel("BACK \(stats.count - half)")
+                    heatMapRow(stats: Array(stats.suffix(stats.count - half)), stdDev: stdDev, meanDiff: meanDiff)
+                }
             }
             .padding(12)
             .background(AppTheme.cardBackground, in: RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
@@ -226,11 +240,12 @@ struct StatsView: View {
     }
 
     private func heatMapRow(stats: [HoleStat], stdDev: Double, meanDiff: Double) -> some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 9), spacing: 4) {
+        let columnCount = max(stats.count, 1)
+        return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: columnCount), spacing: 4) {
             ForEach(stats, id: \.holeNumber) { stat in
                 let isOutlier = stat.count > 0 && abs(stat.avgScoreToPar - meanDiff) > stdDev
                 NavigationLink {
-                    HoleDetailView(holeNumber: stat.holeNumber, selectedTee: selectedTee)
+                    HoleDetailView(holeNumber: stat.holeNumber, selectedTee: selectedTee, course: activeCourse)
                 } label: {
                     VStack(spacing: 2) {
                         Text("\(stat.holeNumber)")

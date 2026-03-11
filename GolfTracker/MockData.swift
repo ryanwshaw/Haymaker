@@ -3,10 +3,20 @@ import SwiftData
 
 struct MockDataGenerator {
     static func generate(in context: ModelContext) {
-        let tees: [Tee] = [.gold, .gold, .gold, .gold, .gold,
-                           .white, .white, .white, .white, .white,
-                           .gold, .gold, .white, .gold, .white,
-                           .silver, .gold, .white, .blue, .gold]
+        let descriptor = FetchDescriptor<Course>(predicate: #Predicate { $0.name == "Haymaker" })
+        let course: Course
+        if let existing = try? context.fetch(descriptor).first {
+            course = existing
+        } else {
+            course = Haymaker.seed(in: context)
+        }
+
+        let teeDistribution: [String] = [
+            "Gold", "Gold", "Gold", "Gold", "Gold",
+            "White", "White", "White", "White", "White",
+            "Gold", "Gold", "White", "Gold", "White",
+            "Silver", "Gold", "White", "Blue", "Gold"
+        ]
 
         let driveResults4 = ["fairway", "fairway", "fairway", "rough_left", "rough_right", "native", "bunker"]
         let greenResults = ["green", "green", "green", "short", "long", "left", "right", "bunker"]
@@ -15,17 +25,19 @@ struct MockDataGenerator {
         let approachClubs: [String] = ["PW", "GW", "SW", "9 Iron", "8 Iron", "7 Iron", "6 Iron", "5 Iron", "Hybrid"]
         let chipClubs: [String] = ["SW", "LW", "GW", "PW"]
 
+        let courseHoles = course.sortedHoles
+
         for i in 0..<20 {
             let daysAgo = Double(i * 5 + seeded(i, max: 4))
             let date = Calendar.current.date(byAdding: .day, value: -Int(daysAgo), to: .now)!
-            let tee = tees[i]
-            let round = Round(date: date, isComplete: true, tee: tee)
+            let teeName = teeDistribution[i]
+            let round = Round(date: date, isComplete: true, tee: teeName, course: course)
             context.insert(round)
 
-            for hole in Haymaker.holes {
+            for hole in courseHoles {
                 let isPar3 = hole.par == 3
                 let isPar5 = hole.par == 5
-                let seed = i * 18 + hole.number
+                let seed = i * 18 + hole.holeNumber
 
                 let scoreDelta: Int
                 let roll = seeded(seed, max: 100)
@@ -77,9 +89,13 @@ struct MockDataGenerator {
                 let penalties = scoreDelta >= 3 ? 1 : 0
 
                 let hs = HoleScore(
-                    holeNumber: hole.number,
+                    holeNumber: hole.holeNumber,
                     score: max(holeScore, 1),
                     putts: putts,
+                    holePar: hole.par,
+                    holeName: hole.name,
+                    holeYardage: hole.yardage(for: teeName),
+                    holeMensHdcp: hole.mensHdcp,
                     teeResultRaw: teeResult,
                     teeClubRaw: teeClub,
                     approachDistance: approachDist,

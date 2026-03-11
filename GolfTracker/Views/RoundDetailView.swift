@@ -48,8 +48,8 @@ struct RoundDetailView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 6) {
-                        Circle().fill(round.tee.color).frame(width: 10, height: 10)
-                        Text("\(round.tee.rawValue) tees")
+                        Circle().fill(round.displayTeeColor).frame(width: 10, height: 10)
+                        Text("\(round.teeRaw) tees · \(round.courseName)")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -98,7 +98,7 @@ struct RoundDetailView: View {
             VStack(spacing: 0) {
                 ForEach(Array(round.sortedScores.enumerated()), id: \.element.id) { i, score in
                     NavigationLink {
-                        RoundHoleDetailView(score: score, tee: round.tee)
+                        RoundHoleDetailView(score: score, round: round)
                     } label: {
                         holeRow(score: score)
                     }
@@ -116,7 +116,7 @@ struct RoundDetailView: View {
     }
 
     private func holeRow(score: HoleScore) -> some View {
-        let info = score.holeInfo
+        let info = score.courseHoleInfo()
         return HStack(spacing: 10) {
             Text("\(info.number)")
                 .font(.system(size: 13, weight: .bold, design: .rounded))
@@ -124,15 +124,15 @@ struct RoundDetailView: View {
                 .frame(width: 26, height: 26)
                 .background(AppTheme.scoreColor(score.scoreToPar), in: Circle())
             VStack(alignment: .leading, spacing: 1) {
-                Text(info.name)
+                Text(info.name.isEmpty ? "Hole \(info.number)" : info.name)
                     .font(.system(size: 14, weight: .semibold, design: .serif))
-                Text("Par \(info.par) · \(info.yardage(for: round.tee)) yds")
+                Text("Par \(score.par) · \(info.yardage(for: round.teeRaw)) yds")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
             Spacer()
             HStack(spacing: 8) {
-                if info.par != 3 {
+                if score.par != 3 {
                     chipTag(score.hitFairway ? "FWY" : "MISS", color: score.hitFairway ? AppTheme.fairwayGreen : .secondary)
                 }
                 chipTag(score.hitGreen ? "GIR" : "MISS", color: score.hitGreen ? AppTheme.fairwayGreen : .secondary)

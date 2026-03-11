@@ -14,6 +14,14 @@ struct SettingsView: View {
             List {
                 Section {
                     NavigationLink {
+                        CourseListView()
+                    } label: {
+                        Label("Courses", systemImage: "map.fill")
+                    }
+                }
+
+                Section {
+                    NavigationLink {
                         BagEditorView()
                     } label: {
                         Label("My Bag", systemImage: "bag.fill")
