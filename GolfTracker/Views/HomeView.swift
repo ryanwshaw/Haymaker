@@ -39,20 +39,6 @@ struct HomeView: View {
             .background(Color(.systemGroupedBackground))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    if !allRounds.isEmpty {
-                        Button(role: .destructive) {
-                            withAnimation(.spring(response: 0.35)) {
-                                for r in allRounds { modelContext.delete(r) }
-                                try? modelContext.save()
-                            }
-                            Haptics.medium()
-                        } label: {
-                            Image(systemName: "trash")
-                                .foregroundStyle(.white.opacity(0.8))
-                        }
-                    }
-                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         if completedRounds.isEmpty {
@@ -61,6 +47,17 @@ struct HomeView: View {
                                 Haptics.success()
                             } label: {
                                 Label("Load sample data", systemImage: "wand.and.stars")
+                            }
+                        }
+                        if !allRounds.isEmpty {
+                            Button(role: .destructive) {
+                                withAnimation(.spring(response: 0.35)) {
+                                    for r in allRounds { modelContext.delete(r) }
+                                    try? modelContext.save()
+                                }
+                                Haptics.medium()
+                            } label: {
+                                Label("Delete all rounds", systemImage: "trash")
                             }
                         }
                     } label: {
