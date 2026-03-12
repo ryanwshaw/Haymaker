@@ -11,15 +11,33 @@ struct StatsEngine {
 
     var roundCount: Int { rounds.count }
 
-    var avgScore: Double {
-        guard !rounds.isEmpty else { return 0 }
-        return Double(rounds.map(\.totalScore).reduce(0, +)) / Double(rounds.count)
-    }
-
     var avgPutts: Double {
         guard !rounds.isEmpty else { return 0 }
         return Double(rounds.map(\.totalPutts).reduce(0, +)) / Double(rounds.count)
     }
+
+    // MARK: - Scoring Averages (only from qualifying rounds)
+
+    private var full18Rounds: [Round] { rounds.filter(\.hasFull18) }
+    private var front9Rounds: [Round] { rounds.filter(\.hasFront9) }
+    private var back9Rounds: [Round] { rounds.filter(\.hasBack9) }
+
+    var avg18HoleScore: Double? {
+        guard !full18Rounds.isEmpty else { return nil }
+        return Double(full18Rounds.map(\.totalScore).reduce(0, +)) / Double(full18Rounds.count)
+    }
+
+    var avgFront9Score: Double? {
+        guard !front9Rounds.isEmpty else { return nil }
+        return Double(front9Rounds.map(\.front9Score).reduce(0, +)) / Double(front9Rounds.count)
+    }
+
+    var avgBack9Score: Double? {
+        guard !back9Rounds.isEmpty else { return nil }
+        return Double(back9Rounds.map(\.back9Score).reduce(0, +)) / Double(back9Rounds.count)
+    }
+
+    var best18HoleScore: Int? { full18Rounds.map(\.totalScore).min() }
 
     var fairwayPct: Double {
         let possible = allScores.filter { $0.par != 3 }

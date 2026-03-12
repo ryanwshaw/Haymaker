@@ -49,7 +49,7 @@ struct RoundDetailView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 6) {
                         Circle().fill(round.displayTeeColor).frame(width: 10, height: 10)
-                        Text("\(round.teeRaw) tees · \(round.courseName)")
+                        Text("\(round.teeRaw) tees · \(round.courseName) · \(round.holesPlayed) holes")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }

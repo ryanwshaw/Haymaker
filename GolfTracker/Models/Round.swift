@@ -62,6 +62,36 @@ final class Round {
         return Double(girCount) / Double(scores.count) * 100
     }
 
+    var holesPlayed: Int { scores.count }
+
+    var hasFront9: Bool {
+        let front = scores.filter { $0.holeNumber >= 1 && $0.holeNumber <= 9 }
+        return front.count == 9
+    }
+
+    var hasBack9: Bool {
+        let back = scores.filter { $0.holeNumber >= 10 && $0.holeNumber <= 18 }
+        return back.count == 9
+    }
+
+    var hasFull18: Bool { hasFront9 && hasBack9 }
+
+    var front9Score: Int {
+        scores.filter { $0.holeNumber >= 1 && $0.holeNumber <= 9 }.map(\.score).reduce(0, +)
+    }
+
+    var back9Score: Int {
+        scores.filter { $0.holeNumber >= 10 && $0.holeNumber <= 18 }.map(\.score).reduce(0, +)
+    }
+
+    var front9Par: Int {
+        scores.filter { $0.holeNumber >= 1 && $0.holeNumber <= 9 }.map(\.par).reduce(0, +)
+    }
+
+    var back9Par: Int {
+        scores.filter { $0.holeNumber >= 10 && $0.holeNumber <= 18 }.map(\.par).reduce(0, +)
+    }
+
     var displayTeeColor: Color {
         GolfTracker.teeColor(for: teeRaw, in: course)
     }

@@ -82,14 +82,15 @@ struct HomeView: View {
     }
 
     private var heroStats: some View {
-        let avg = Double(completedRounds.map(\.totalScore).reduce(0, +)) / Double(completedRounds.count)
+        let full18 = completedRounds.filter(\.hasFull18)
+        let avg18: String = full18.isEmpty ? "—" : String(format: "%.0f", Double(full18.map(\.totalScore).reduce(0, +)) / Double(full18.count))
+        let best: String = full18.isEmpty ? "—" : "\(full18.map(\.totalScore).min() ?? 0)"
         let avgPutts = Double(completedRounds.map(\.totalPutts).reduce(0, +)) / Double(completedRounds.count)
-        let best = completedRounds.map(\.totalScore).min() ?? 0
 
         return HStack(spacing: 0) {
-            heroStat(value: String(format: "%.0f", avg), label: "AVG")
+            heroStat(value: avg18, label: "AVG 18")
             heroDivider
-            heroStat(value: "\(best)", label: "BEST")
+            heroStat(value: best, label: "BEST")
             heroDivider
             heroStat(value: String(format: "%.0f", avgPutts), label: "PUTTS")
             heroDivider
@@ -496,7 +497,7 @@ struct RoundRowView: View {
                     .font(.subheadline.bold())
                 HStack(spacing: 6) {
                     Circle().fill(round.displayTeeColor).frame(width: 7, height: 7)
-                    Text("\(round.teeRaw) · \(round.courseName)")
+                    Text("\(round.teeRaw) · \(round.courseName)\(round.holesPlayed < 18 ? " · \(round.holesPlayed)h" : "")")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

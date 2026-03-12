@@ -122,9 +122,8 @@ struct StatsView: View {
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }
+            scoringAveragesRow
             HStack(spacing: 0) {
-                overviewStat(value: String(format: "%.1f", engine.avgScore), label: "AVG SCORE")
-                statDivider
                 overviewStat(value: String(format: "%.1f", engine.avgPutts), label: "PUTTS/RND")
                 statDivider
                 overviewStat(value: String(format: "%.0f%%", engine.fairwayPct), label: "FWY")
@@ -141,6 +140,38 @@ struct StatsView: View {
         .padding(16)
         .background(AppTheme.cardBackground, in: RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
         .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
+    }
+
+    private var scoringAveragesRow: some View {
+        HStack(spacing: 0) {
+            scoringAvgStat(value: engine.avg18HoleScore, label: "18-HOLE")
+            statDivider
+            scoringAvgStat(value: engine.avgFront9Score, label: "FRONT 9")
+            statDivider
+            scoringAvgStat(value: engine.avgBack9Score, label: "BACK 9")
+            if let best = engine.best18HoleScore {
+                statDivider
+                overviewStat(value: "\(best)", label: "BEST 18")
+            }
+        }
+    }
+
+    private func scoringAvgStat(value: Double?, label: String) -> some View {
+        VStack(spacing: 3) {
+            if let v = value {
+                Text(String(format: "%.1f", v))
+                    .font(.headline.monospacedDigit())
+                    .foregroundStyle(AppTheme.fairwayGreen)
+            } else {
+                Text("—")
+                    .font(.headline)
+                    .foregroundStyle(.tertiary)
+            }
+            Text(label)
+                .font(.system(size: 9, weight: .bold))
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
     }
 
     private func overviewStat(value: String, label: String) -> some View {

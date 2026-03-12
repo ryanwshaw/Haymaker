@@ -8,6 +8,7 @@ struct ActiveRoundView: View {
 
     @State private var currentHoleIndex = 0
     @State private var showDiscardConfirm = false
+    @State private var showFinishConfirm = false
 
     private var sortedScores: [HoleScore] { round.sortedScores }
 
@@ -75,12 +76,14 @@ struct ActiveRoundView: View {
                     }
                 }
                 ToolbarItem(placement: .primaryAction) {
-                    if !sortedScores.isEmpty && currentHoleIndex == sortedScores.count - 1 {
+                    if !sortedScores.isEmpty {
                         Button {
-                            round.isComplete = true
-                            try? modelContext.save()
-                            Haptics.success()
-                            onDismiss()
+                            let played = sortedScores.filter { !$0.teeResultRaw.isEmpty }
+                            if played.count < sortedScores.count {
+                                showFinishConfirm = true
+                            } else {
+                                finishRound()
+                            }
                         } label: {
                             Text("Finish")
                                 .font(.subheadline.bold())
@@ -106,7 +109,25 @@ struct ActiveRoundView: View {
             } message: {
                 Text("This will permanently delete this round and all hole data.")
             }
+            .alert("Finish round?", isPresented: $showFinishConfirm) {
+                Button("Finish") { finishRound() }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                let played = sortedScores.filter { !$0.teeResultRaw.isEmpty }.count
+                Text("You've logged \(played) of \(sortedScores.count) holes. Unplayed holes will be removed.")
+            }
         }
+    }
+
+    private func finishRound() {
+        let unplayed = sortedScores.filter { $0.teeResultRaw.isEmpty }
+        for score in unplayed {
+            modelContext.delete(score)
+        }
+        round.isComplete = true
+        try? modelContext.save()
+        Haptics.success()
+        onDismiss()
     }
 
     // MARK: - Hole Picker
