@@ -10,29 +10,42 @@ struct GolfTrackerApp: App {
             Course.self,
             CourseHole.self,
         ])
-        let config = ModelConfiguration(isStoredInMemoryOnly: false)
+
+        // Try the default store first
         do {
+            let config = ModelConfiguration(isStoredInMemoryOnly: false)
             return try ModelContainer(for: schema, configurations: [config])
         } catch {
-            let url = config.url
-            let dir = url.deletingLastPathComponent()
-            let base = url.deletingPathExtension().lastPathComponent
+            print("Default store failed: \(error)")
+        }
 
-            // Remove every file related to this store
-            if let contents = try? FileManager.default.contentsOfDirectory(
-                at: dir, includingPropertiesForKeys: nil) {
-                for file in contents where file.lastPathComponent.hasPrefix(base) {
-                    try? FileManager.default.removeItem(at: file)
+        // Nuke everything in Application Support that looks like a SwiftData store
+        if let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
+            let fm = FileManager.default
+            if let contents = try? fm.contentsOfDirectory(at: appSupport, includingPropertiesForKeys: nil) {
+                for file in contents where file.lastPathComponent.contains("default") ||
+                                           file.pathExtension == "store" {
+                    try? fm.removeItem(at: file)
                 }
             }
-            // Fallback: also try the exact URL
-            try? FileManager.default.removeItem(at: url)
+        }
 
-            do {
-                return try ModelContainer(for: schema, configurations: [config])
-            } catch {
-                fatalError("Could not create ModelContainer after reset: \(error)")
-            }
+        // Retry with an explicit fresh URL
+        do {
+            let freshURL = URL.applicationSupportDirectory.appending(path: "GolfTracker.store")
+            try? FileManager.default.removeItem(at: freshURL)
+            let config = ModelConfiguration(url: freshURL)
+            return try ModelContainer(for: schema, configurations: [config])
+        } catch {
+            print("Fresh store also failed: \(error)")
+        }
+
+        // Last resort: in-memory so the app at least launches
+        do {
+            let memConfig = ModelConfiguration(isStoredInMemoryOnly: true)
+            return try ModelContainer(for: schema, configurations: [memConfig])
+        } catch {
+            fatalError("Could not create any ModelContainer: \(error)")
         }
     }()
 
