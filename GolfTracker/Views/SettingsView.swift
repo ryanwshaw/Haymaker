@@ -14,33 +14,6 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("Social") {
-                    NavigationLink {
-                        ProfileView()
-                    } label: {
-                        Label("Profile", systemImage: "person.circle.fill")
-                    }
-                    NavigationLink {
-                        FriendsListView()
-                    } label: {
-                        Label {
-                            HStack {
-                                Text("Friends")
-                                if CloudKitManager.shared.pendingRequests.count > 0 {
-                                    Text("\(CloudKitManager.shared.pendingRequests.count)")
-                                        .font(.caption2.bold())
-                                        .foregroundStyle(.white)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(AppTheme.double, in: Capsule())
-                                }
-                            }
-                        } icon: {
-                            Image(systemName: "person.2.fill")
-                        }
-                    }
-                }
-
                 Section {
                     NavigationLink {
                         CourseListView()

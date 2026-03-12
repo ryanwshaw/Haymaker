@@ -17,6 +17,8 @@ struct ContentView: View {
                         .tag(0)
                     StatsView()
                         .tag(1)
+                    SocialView()
+                        .tag(2)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .never))
             }
@@ -70,11 +72,12 @@ struct ContentView: View {
         HStack(spacing: 0) {
             pageTab("Rounds", index: 0)
             pageTab("Stats", index: 1)
+            pageTab("Social", index: 2, badge: CloudKitManager.shared.pendingRequests.count)
         }
         .background(AppTheme.darkGreen)
     }
 
-    private func pageTab(_ title: String, index: Int) -> some View {
+    private func pageTab(_ title: String, index: Int, badge: Int = 0) -> some View {
         let isActive = selectedPage == index
         return Button {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -83,9 +86,19 @@ struct ContentView: View {
             Haptics.selection()
         } label: {
             VStack(spacing: 6) {
-                Text(title)
-                    .font(.subheadline.weight(isActive ? .bold : .medium))
-                    .foregroundStyle(isActive ? .white : .white.opacity(0.45))
+                HStack(spacing: 4) {
+                    Text(title)
+                        .font(.subheadline.weight(isActive ? .bold : .medium))
+                        .foregroundStyle(isActive ? .white : .white.opacity(0.45))
+                    if badge > 0 {
+                        Text("\(badge)")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(AppTheme.double, in: Capsule())
+                    }
+                }
                 RoundedRectangle(cornerRadius: 1.5)
                     .fill(isActive ? AppTheme.gold : Color.clear)
                     .frame(height: 3)
