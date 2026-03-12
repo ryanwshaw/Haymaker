@@ -14,15 +14,20 @@ struct GolfTrackerApp: App {
         do {
             return try ModelContainer(for: schema, configurations: [config])
         } catch {
-            // Schema changed — delete the old store and recreate
             let url = config.url
-            try? FileManager.default.removeItem(at: url)
-            // Also remove journal/wal files
             let dir = url.deletingLastPathComponent()
-            let name = url.lastPathComponent
-            for suffix in ["-shm", "-wal"] {
-                try? FileManager.default.removeItem(at: dir.appendingPathComponent(name + suffix))
+            let base = url.deletingPathExtension().lastPathComponent
+
+            // Remove every file related to this store
+            if let contents = try? FileManager.default.contentsOfDirectory(
+                at: dir, includingPropertiesForKeys: nil) {
+                for file in contents where file.lastPathComponent.hasPrefix(base) {
+                    try? FileManager.default.removeItem(at: file)
+                }
             }
+            // Fallback: also try the exact URL
+            try? FileManager.default.removeItem(at: url)
+
             do {
                 return try ModelContainer(for: schema, configurations: [config])
             } catch {
