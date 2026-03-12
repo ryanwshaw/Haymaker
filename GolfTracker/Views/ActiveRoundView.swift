@@ -127,6 +127,10 @@ struct ActiveRoundView: View {
         round.isComplete = true
         try? modelContext.save()
         Haptics.success()
+
+        let roundToPublish = round
+        Task { await CloudKitManager.shared.publishRound(roundToPublish) }
+
         onDismiss()
     }
 

@@ -35,6 +35,7 @@ struct GolfTrackerApp: App {
         WindowGroup {
             ContentView()
                 .onAppear { seedDefaultCourseIfNeeded() }
+                .task { await CloudKitManager.shared.setup() }
         }
         .modelContainer(sharedModelContainer)
     }

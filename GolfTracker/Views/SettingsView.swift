@@ -6,12 +6,41 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \Round.date, order: .reverse) private var allRounds: [Round]
     @State private var showDeleteConfirm = false
+    @State private var isBackfilling = false
+    @State private var backfillDone = false
 
     private var completedRounds: [Round] { allRounds.filter(\.isComplete) }
 
     var body: some View {
         NavigationStack {
             List {
+                Section("Social") {
+                    NavigationLink {
+                        ProfileView()
+                    } label: {
+                        Label("Profile", systemImage: "person.circle.fill")
+                    }
+                    NavigationLink {
+                        FriendsListView()
+                    } label: {
+                        Label {
+                            HStack {
+                                Text("Friends")
+                                if CloudKitManager.shared.pendingRequests.count > 0 {
+                                    Text("\(CloudKitManager.shared.pendingRequests.count)")
+                                        .font(.caption2.bold())
+                                        .foregroundStyle(.white)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(AppTheme.double, in: Capsule())
+                                }
+                            }
+                        } icon: {
+                            Image(systemName: "person.2.fill")
+                        }
+                    }
+                }
+
                 Section {
                     NavigationLink {
                         CourseListView()
@@ -29,6 +58,23 @@ struct SettingsView: View {
                 }
 
                 Section("Data") {
+                    if !completedRounds.isEmpty && CloudKitManager.shared.iCloudAvailable {
+                        Button {
+                            isBackfilling = true
+                            Task {
+                                await CloudKitManager.shared.backfillRounds(completedRounds)
+                                isBackfilling = false
+                                backfillDone = true
+                                Haptics.success()
+                            }
+                        } label: {
+                            Label(
+                                isBackfilling ? "Publishing..." : (backfillDone ? "Rounds published" : "Publish rounds to iCloud"),
+                                systemImage: backfillDone ? "checkmark.icloud.fill" : "icloud.and.arrow.up"
+                            )
+                        }
+                        .disabled(isBackfilling || backfillDone)
+                    }
                     if completedRounds.isEmpty {
                         Button {
                             MockDataGenerator.generate(in: modelContext)
