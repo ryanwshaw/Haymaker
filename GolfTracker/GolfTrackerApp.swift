@@ -42,9 +42,13 @@ struct GolfTrackerApp: App {
     private func seedDefaultCourseIfNeeded() {
         let context = sharedModelContainer.mainContext
         let descriptor = FetchDescriptor<Course>()
-        let count = (try? context.fetchCount(descriptor)) ?? 0
-        if count == 0 {
+        let courses = (try? context.fetch(descriptor)) ?? []
+        if courses.isEmpty {
             Haymaker.seed(in: context)
+        } else if let haymaker = courses.first(where: { $0.name == Haymaker.name }),
+                  haymaker.logoData == nil {
+            haymaker.logoData = Haymaker.logoData
+            try? context.save()
         }
     }
 }

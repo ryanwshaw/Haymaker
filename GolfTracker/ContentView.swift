@@ -33,17 +33,25 @@ struct ContentView: View {
                     }
                 }
                 ToolbarItem(placement: .principal) {
-                    HStack(spacing: 8) {
+                    HStack(spacing: 10) {
                         if let logo = activeCourse?.logoImage {
                             Image(uiImage: logo)
                                 .resizable()
                                 .scaledToFill()
-                                .frame(width: 24, height: 24)
-                                .clipShape(RoundedRectangle(cornerRadius: 5))
+                                .frame(width: 32, height: 32)
+                                .clipShape(RoundedRectangle(cornerRadius: 7))
+                                .shadow(color: .black.opacity(0.3), radius: 2, y: 1)
                         }
-                        Text(activeCourse?.name ?? "GolfTracker")
-                            .font(.system(size: 18, weight: .bold, design: .serif))
-                            .foregroundStyle(.white)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(activeCourse?.name ?? "GolfTracker")
+                                .font(.system(size: 17, weight: .bold, design: .serif))
+                                .foregroundStyle(.white)
+                            if let course = activeCourse {
+                                Text("\(course.sortedHoles.count) holes · Par \(course.totalPar)")
+                                    .font(.system(size: 10, weight: .medium))
+                                    .foregroundStyle(.white.opacity(0.55))
+                            }
+                        }
                     }
                 }
             }

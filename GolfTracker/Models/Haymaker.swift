@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import UIKit
 
 struct HoleInfo {
     let number: Int
@@ -68,10 +69,14 @@ struct Haymaker {
                  yardages: ["Silver": 562, "Gold": 521, "White": 480, "Blue": 436, "Family": 330]),
     ]
 
+    static var logoData: Data? {
+        UIImage(named: "HaymakerLogo")?.pngData()
+    }
+
     /// Creates a persisted Course from the static Haymaker data.
     @discardableResult
     static func seed(in context: ModelContext) -> Course {
-        let course = Course(name: Haymaker.name, tees: Haymaker.tees)
+        let course = Course(name: Haymaker.name, tees: Haymaker.tees, logoData: Haymaker.logoData)
         context.insert(course)
 
         for info in Haymaker.holes {
