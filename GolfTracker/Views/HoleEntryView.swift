@@ -4,6 +4,7 @@ import SwiftData
 struct HoleEntryView: View {
     @Bindable var score: HoleScore
     let round: Round
+    var onSubmit: ((HoleScore) -> Void)?
     @ObservedObject private var bag = BagManager.shared
 
     private var info: HoleInfo { score.courseHoleInfo() }
@@ -19,12 +20,15 @@ struct HoleEntryView: View {
                     step2_approachDistance
                     step3_approachResult
                 }
-                if !score.hitGreen {
+                if !isPar3 && !score.hitGreen {
                     step4_shortGame
                         .transition(.opacity.combined(with: .move(edge: .top)))
                 }
                 step5_putting
                 scoreSummary
+                if score.teeResultRaw.isEmpty == false {
+                    submitButton
+                }
                 Color.clear.frame(height: 20)
             }
             .padding(.horizontal)
@@ -150,7 +154,7 @@ struct HoleEntryView: View {
     // MARK: - Step 5
 
     private var step5_putting: some View {
-        cardSection(step: isPar3 ? (score.hitGreen ? 2 : 3) : (score.hitGreen ? 4 : 5), title: "Putting") {
+        cardSection(step: isPar3 ? 2 : (score.hitGreen ? 4 : 5), title: "Putting") {
             VStack(spacing: 14) {
                 HStack {
                     Text("Putts")
@@ -177,6 +181,8 @@ struct HoleEntryView: View {
 
     // MARK: - Score
 
+    @State private var showScoreFlash = false
+
     private var scoreSummary: some View {
         HStack(spacing: 0) {
             VStack(spacing: 4) {
@@ -187,6 +193,8 @@ struct HoleEntryView: View {
                 Text(score.scoreLabel)
                     .font(.caption.bold())
                     .foregroundStyle(AppTheme.scoreColor(score.scoreToPar))
+                    .contentTransition(.numericText())
+                    .animation(.spring(response: 0.3), value: score.scoreToPar)
             }
             .frame(maxWidth: .infinity)
 
@@ -206,7 +214,59 @@ struct HoleEntryView: View {
         }
         .padding(16)
         .background(AppTheme.cardBackground, in: RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
+        .overlay(
+            RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
+                .fill(scoreFlashColor.opacity(showScoreFlash ? 0.2 : 0))
+                .animation(.easeOut(duration: 0.6), value: showScoreFlash)
+        )
         .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
+        .onChange(of: score.score) { _, newScore in
+            let toPar = newScore - score.par
+            if toPar <= -1 {
+                showScoreFlash = true
+                Haptics.success()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    showScoreFlash = false
+                }
+            }
+        }
+    }
+
+    private var scoreFlashColor: Color {
+        score.scoreToPar <= -2 ? AppTheme.eagle : AppTheme.birdie
+    }
+
+    // MARK: - Submit
+
+    @State private var submitPressed = false
+
+    private var submitButton: some View {
+        Button {
+            submitPressed = true
+            Haptics.medium()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                submitPressed = false
+                onSubmit?(score)
+            }
+        } label: {
+            HStack(spacing: 8) {
+                Text("Submit hole \(score.holeNumber)")
+                    .font(.headline)
+                Image(systemName: "arrow.right")
+                    .font(.subheadline.bold())
+            }
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity, minHeight: 52)
+            .background(
+                LinearGradient(colors: [AppTheme.fairwayGreen, AppTheme.darkGreen],
+                               startPoint: .leading, endPoint: .trailing),
+                in: RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
+            )
+            .scaleEffect(submitPressed ? 0.97 : 1.0)
+            .animation(.spring(response: 0.2), value: submitPressed)
+            .shadow(color: AppTheme.fairwayGreen.opacity(0.3), radius: 8, y: 4)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Reusable

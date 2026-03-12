@@ -4,42 +4,56 @@ import SwiftData
 struct StatsView: View {
     @Query(sort: \Round.date, order: .reverse) private var allRounds: [Round]
     @Query(sort: \Course.createdAt) private var courses: [Course]
+    @State private var selectedCourse: Course? = nil
     @State private var selectedTee: String? = nil
 
-    private var activeCourse: Course? { courses.first }
-
     private var completedRounds: [Round] {
-        allRounds.filter { $0.isComplete && $0.course?.persistentModelID == activeCourse?.persistentModelID }
+        let completed = allRounds.filter(\.isComplete)
+        if let course = selectedCourse {
+            return completed.filter { $0.course?.persistentModelID == course.persistentModelID }
+        }
+        return completed
     }
 
     private var engine: StatsEngine { StatsEngine.filtered(rounds: completedRounds, tee: selectedTee) }
 
     private var availableTees: [CourseTeeInfo] {
-        activeCourse?.teeInfos.sorted(by: { $0.sortOrder < $1.sortOrder }) ?? []
+        selectedCourse?.teeInfos.sorted(by: { $0.sortOrder < $1.sortOrder }) ?? []
     }
+
+    private var isSingleCourse: Bool { selectedCourse != nil }
 
     var body: some View {
         Group {
-            if completedRounds.isEmpty {
+            if allRounds.filter(\.isComplete).isEmpty {
                 ScrollView {
                     emptyState
                 }
             } else {
                 ScrollView {
                     VStack(spacing: 18) {
-                        teeFilter
+                        courseFilter
+                        if isSingleCourse {
+                            teeFilter
+                        }
                         if engine.roundCount == 0 {
                             noDataForTee
                         } else {
-                            overviewCard
-                            scoringBreakdown
-                            heatMapSection
-                            approachByDistanceCard
+                            overviewCard.staggeredAppear(index: 0)
+                            ScoringTrendChart(rounds: engine.rounds).staggeredAppear(index: 1)
+                            ScoreDistributionChart(engine: engine).staggeredAppear(index: 2)
+                            PuttsTrendChart(rounds: engine.rounds).staggeredAppear(index: 3)
+                            if isSingleCourse {
+                                HoleAvgChart(holeStats: engine.holeStats).staggeredAppear(index: 4)
+                                heatMapSection.staggeredAppear(index: 5)
+                            }
+                            approachByDistanceCard.staggeredAppear(index: isSingleCourse ? 6 : 4)
                             Color.clear.frame(height: 16)
                         }
                     }
                     .padding()
                     .animation(.spring(response: 0.35), value: selectedTee)
+                    .animation(.spring(response: 0.35), value: selectedCourse?.persistentModelID)
                 }
             }
         }
@@ -49,16 +63,27 @@ struct StatsView: View {
     // MARK: - Empty States
 
     private var emptyState: some View {
-        VStack(spacing: 16) {
-            Spacer(minLength: 60)
-            Image(systemName: "chart.bar")
-                .font(.system(size: 44))
-                .foregroundStyle(AppTheme.gold.opacity(0.4))
-            Text("No stats yet")
-                .font(.title3.bold())
-            Text("Complete a round to see your stats.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+        VStack(spacing: 20) {
+            Spacer(minLength: 40)
+            ZStack {
+                Circle()
+                    .fill(AppTheme.goldLight)
+                    .frame(width: 100, height: 100)
+                Image(systemName: "chart.line.uptrend.xyaxis")
+                    .font(.system(size: 40))
+                    .foregroundStyle(AppTheme.gold)
+                    .symbolEffect(.pulse.byLayer, options: .repeating)
+            }
+            VStack(spacing: 8) {
+                Text("No stats yet")
+                    .font(.title3.bold())
+                Text("Play a few rounds to unlock insights about your game. Stats, trends, and comparisons will appear here.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+            }
+            Spacer()
         }
         .frame(maxWidth: .infinity)
     }
@@ -75,12 +100,48 @@ struct StatsView: View {
         .padding(.vertical, 40)
     }
 
+    // MARK: - Course Filter
+
+    private var courseFilter: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                courseChip(label: "All Courses", course: nil)
+                ForEach(courses) { course in
+                    courseChip(label: course.name, course: course)
+                }
+            }
+        }
+    }
+
+    private func courseChip(label: String, course: Course?) -> some View {
+        let isActive = selectedCourse?.persistentModelID == course?.persistentModelID
+        return Button {
+            Haptics.selection()
+            selectedCourse = course
+            selectedTee = nil
+        } label: {
+            HStack(spacing: 5) {
+                if course != nil {
+                    Image(systemName: "flag.fill")
+                        .font(.system(size: 8))
+                }
+                Text(label)
+                    .font(.subheadline.bold())
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(isActive ? AppTheme.darkGreen : AppTheme.subtleBackground, in: Capsule())
+            .foregroundStyle(isActive ? .white : .primary)
+        }
+        .buttonStyle(.plain)
+    }
+
     // MARK: - Tee Filter
 
     private var teeFilter: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                teeChip(label: "All", teeName: nil)
+                teeChip(label: "All tees", teeName: nil)
                 ForEach(availableTees) { tee in
                     teeChip(label: tee.name, teeName: tee.name, dotColor: tee.color)
                 }
@@ -276,7 +337,7 @@ struct StatsView: View {
             ForEach(stats, id: \.holeNumber) { stat in
                 let isOutlier = stat.count > 0 && abs(stat.avgScoreToPar - meanDiff) > stdDev
                 NavigationLink {
-                    HoleDetailView(holeNumber: stat.holeNumber, selectedTee: selectedTee, course: activeCourse)
+                    HoleDetailView(holeNumber: stat.holeNumber, selectedTee: selectedTee, course: selectedCourse)
                 } label: {
                     VStack(spacing: 2) {
                         Text("\(stat.holeNumber)")

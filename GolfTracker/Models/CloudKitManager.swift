@@ -5,8 +5,22 @@ import SwiftUI
 final class CloudKitManager: ObservableObject {
     static let shared = CloudKitManager()
 
-    private let container = CKContainer(identifier: "iCloud.com.ryanshaw.GolfTracker")
-    private var publicDB: CKDatabase { container.publicCloudDatabase }
+    private lazy var container: CKContainer? = {
+        guard Self.entitlementsIncludeICloud else { return nil }
+        return CKContainer(identifier: "iCloud.com.ryanshaw.GolfTracker")
+    }()
+
+    private var publicDB: CKDatabase? { container?.publicCloudDatabase }
+
+    private static var entitlementsIncludeICloud: Bool {
+        guard let entitlements = Bundle.main.infoDictionary else { return false }
+        if let ids = entitlements["com.apple.developer.icloud-container-identifiers"] as? [String], !ids.isEmpty {
+            return true
+        }
+        return FileManager.default.fileExists(
+            atPath: Bundle.main.path(forResource: "archived-expanded-entitlements", ofType: "xcent") ?? ""
+        )
+    }
 
     static let userProfileType = "UserProfile"
     static let sharedRoundType = "SharedRound"
@@ -58,6 +72,11 @@ final class CloudKitManager: ObservableObject {
     // MARK: - Setup
 
     func setup() async {
+        guard let container else {
+            iCloudAvailable = false
+            return
+        }
+
         isLoading = true
         defer { isLoading = false }
 
@@ -86,6 +105,7 @@ final class CloudKitManager: ObservableObject {
     }
 
     func fetchOrCreateProfile() async {
+        guard let container, let publicDB else { return }
         do {
             let userRecordID = try await container.userRecordID()
             let predicate = NSPredicate(format: "creatorUserRecordID == %@", userRecordID)
@@ -109,7 +129,7 @@ final class CloudKitManager: ObservableObject {
     }
 
     func updateDisplayName(_ name: String) async {
-        guard let profile = userProfile else { return }
+        guard let publicDB, let profile = userProfile else { return }
         profile["displayName"] = name as CKRecordValue
         do {
             let saved = try await publicDB.save(profile)
@@ -120,7 +140,7 @@ final class CloudKitManager: ObservableObject {
     }
 
     func updateHomeCourse(_ course: String) async {
-        guard let profile = userProfile else { return }
+        guard let publicDB, let profile = userProfile else { return }
         profile["homeCourse"] = course as CKRecordValue
         do {
             let saved = try await publicDB.save(profile)
@@ -141,6 +161,7 @@ final class CloudKitManager: ObservableObject {
     // MARK: - Friend Lookup
 
     func lookupUser(byCode code: String) async -> CKRecord? {
+        guard let publicDB else { return nil }
         let predicate = NSPredicate(format: "friendCode == %@", code.uppercased())
         let query = CKQuery(recordType: Self.userProfileType, predicate: predicate)
         do {
@@ -154,7 +175,7 @@ final class CloudKitManager: ObservableObject {
     // MARK: - Friendships
 
     func sendFriendRequest(to targetProfile: CKRecord) async -> Bool {
-        guard let myProfile = userProfile else { return false }
+        guard let publicDB, let myProfile = userProfile else { return false }
 
         let friendship = CKRecord(recordType: Self.friendshipType)
         friendship["fromUser"] = CKRecord.Reference(record: myProfile, action: .none) as CKRecordValue
@@ -178,6 +199,7 @@ final class CloudKitManager: ObservableObject {
     }
 
     func acceptFriendRequest(_ friendship: CKRecord) async {
+        guard let publicDB else { return }
         friendship["status"] = "accepted" as CKRecordValue
         do {
             try await publicDB.save(friendship)
@@ -189,6 +211,7 @@ final class CloudKitManager: ObservableObject {
     }
 
     func declineFriendRequest(_ friendship: CKRecord) async {
+        guard let publicDB else { return }
         do {
             try await publicDB.deleteRecord(withID: friendship.recordID)
             await fetchPendingRequests()
@@ -198,6 +221,7 @@ final class CloudKitManager: ObservableObject {
     }
 
     func removeFriend(_ friendship: CKRecord) async {
+        guard let publicDB else { return }
         do {
             try await publicDB.deleteRecord(withID: friendship.recordID)
             await fetchFriends()
@@ -207,7 +231,7 @@ final class CloudKitManager: ObservableObject {
     }
 
     func fetchFriends() async {
-        guard let profile = userProfile else { return }
+        guard let publicDB, let profile = userProfile else { return }
         let ref = CKRecord.Reference(record: profile, action: .none)
         var all: [CKRecord] = []
 
@@ -225,7 +249,7 @@ final class CloudKitManager: ObservableObject {
     }
 
     func fetchPendingRequests() async {
-        guard let profile = userProfile else { return }
+        guard let publicDB, let profile = userProfile else { return }
         let ref = CKRecord.Reference(record: profile, action: .none)
         let predicate = NSPredicate(format: "toUser == %@ AND status == %@", ref, "pending")
         let query = CKQuery(recordType: Self.friendshipType, predicate: predicate)
@@ -237,7 +261,6 @@ final class CloudKitManager: ObservableObject {
         }
     }
 
-    /// Returns the friend's name from a friendship record (the other person, not you).
     func friendDisplayName(from friendship: CKRecord) -> String {
         guard let myProfile = userProfile else { return "Friend" }
         let myRef = CKRecord.Reference(record: myProfile, action: .none)
@@ -247,7 +270,6 @@ final class CloudKitManager: ObservableObject {
         return friendship["fromName"] as? String ?? "Friend"
     }
 
-    /// Returns the friend's code from a friendship record.
     func friendCodeValue(from friendship: CKRecord) -> String {
         guard let myProfile = userProfile else { return "" }
         let myRef = CKRecord.Reference(record: myProfile, action: .none)
@@ -257,9 +279,8 @@ final class CloudKitManager: ObservableObject {
         return friendship["fromCode"] as? String ?? ""
     }
 
-    /// Fetches the friend's UserProfile record from a friendship.
     func friendProfile(from friendship: CKRecord) async -> CKRecord? {
-        guard let myProfile = userProfile else { return nil }
+        guard let publicDB, let myProfile = userProfile else { return nil }
         let myRef = CKRecord.Reference(record: myProfile, action: .none)
 
         let friendRef: CKRecord.Reference?
@@ -280,7 +301,7 @@ final class CloudKitManager: ObservableObject {
     // MARK: - Round Publishing
 
     func publishRound(_ round: Round) async {
-        guard let profile = userProfile else { return }
+        guard let publicDB, let profile = userProfile else { return }
 
         let recordName = "round-\(Int(round.date.timeIntervalSince1970))-\(round.totalScore)"
         let recordID = CKRecord.ID(recordName: recordName)
@@ -328,6 +349,7 @@ final class CloudKitManager: ObservableObject {
     }
 
     func fetchFriendRounds(friendProfile: CKRecord) async -> [SharedRoundSummary] {
+        guard let publicDB else { return [] }
         let ref = CKRecord.Reference(record: friendProfile, action: .none)
         let predicate = NSPredicate(format: "owner == %@", ref)
         let query = CKQuery(recordType: Self.sharedRoundType, predicate: predicate)

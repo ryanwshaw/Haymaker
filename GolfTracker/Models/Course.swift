@@ -30,6 +30,7 @@ struct CourseTeeInfo: Codable, Identifiable, Hashable {
 final class Course {
     var name: String
     var logoData: Data?
+    var photoData: Data?
     var scorecardImageData: Data?
     var teesData: Data
     var createdAt: Date
@@ -40,6 +41,7 @@ final class Course {
     init(name: String, tees: [CourseTeeInfo] = [], logoData: Data? = nil) {
         self.name = name
         self.logoData = logoData
+        self.photoData = nil
         self.scorecardImageData = nil
         self.teesData = (try? JSONEncoder().encode(tees)) ?? Data()
         self.createdAt = .now
@@ -76,6 +78,11 @@ final class Course {
 
     var logoImage: UIImage? {
         guard let data = logoData else { return nil }
+        return UIImage(data: data)
+    }
+
+    var photoImage: UIImage? {
+        guard let data = photoData else { return nil }
         return UIImage(data: data)
     }
 }

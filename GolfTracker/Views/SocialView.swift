@@ -12,15 +12,7 @@ struct SocialView: View {
     private var completedRounds: [Round] { allRounds.filter(\.isComplete) }
 
     var body: some View {
-        Group {
-            if !ck.iCloudAvailable {
-                iCloudUnavailable
-            } else if ck.isLoading {
-                loadingState
-            } else {
-                mainContent
-            }
-        }
+        mainContent
         .background(Color(.systemGroupedBackground))
         .alert("Add Friend", isPresented: $showAddFriend) {
             TextField("Friend code (e.g. HMK-A7X2)", text: $friendCode)
@@ -43,32 +35,23 @@ struct SocialView: View {
 
     // MARK: - States
 
-    private var iCloudUnavailable: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                Spacer(minLength: 60)
-                Image(systemName: "icloud.slash")
-                    .font(.system(size: 44))
-                    .foregroundStyle(AppTheme.gold.opacity(0.4))
-                Text("iCloud Required")
-                    .font(.title3.bold())
-                Text("Sign in to iCloud in Settings to use social features.")
-                    .font(.subheadline)
+    private var iCloudBanner: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "icloud.slash")
+                .font(.title3)
+                .foregroundStyle(AppTheme.gold.opacity(0.6))
+            VStack(alignment: .leading, spacing: 2) {
+                Text("iCloud Unavailable")
+                    .font(.subheadline.bold())
+                Text("Sign in to iCloud for online features. Sample friends still work below.")
+                    .font(.caption)
                     .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
             }
-            .frame(maxWidth: .infinity)
+            Spacer()
         }
-    }
-
-    private var loadingState: some View {
-        VStack(spacing: 16) {
-            ProgressView()
-            Text("Connecting to iCloud...")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(14)
+        .background(AppTheme.cardBackground, in: RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
+        .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
     }
 
     // MARK: - Main Content
@@ -76,12 +59,25 @@ struct SocialView: View {
     private var mainContent: some View {
         ScrollView {
             VStack(spacing: 18) {
-                profileCard
-                addFriendButton
-                if !ck.pendingRequests.isEmpty {
-                    pendingRequestsCard
+                if ck.iCloudAvailable {
+                    profileCard.staggeredAppear(index: 0)
+                    addFriendButton.staggeredAppear(index: 1)
+                    if !ck.pendingRequests.isEmpty {
+                        pendingRequestsCard.staggeredAppear(index: 2)
+                    }
+                } else if ck.isLoading {
+                    HStack(spacing: 10) {
+                        ProgressView()
+                        Text("Connecting to iCloud...")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                } else {
+                    iCloudBanner
                 }
-                friendsCard
+                friendsCard.staggeredAppear(index: 3)
                 Color.clear.frame(height: 16)
             }
             .padding()
@@ -90,8 +86,10 @@ struct SocialView: View {
             .animation(.spring(response: 0.35), value: ck.localFriends.count)
         }
         .refreshable {
-            await ck.fetchFriends()
-            await ck.fetchPendingRequests()
+            if ck.iCloudAvailable {
+                await ck.fetchFriends()
+                await ck.fetchPendingRequests()
+            }
         }
     }
 
@@ -302,16 +300,22 @@ struct SocialView: View {
 
     private var emptyFriendsCard: some View {
         VStack(spacing: 16) {
-            Image(systemName: "person.2")
-                .font(.title2)
-                .foregroundStyle(.secondary)
+            ZStack {
+                Circle()
+                    .fill(AppTheme.fairwayGreen.opacity(0.08))
+                    .frame(width: 80, height: 80)
+                Image(systemName: "person.2.fill")
+                    .font(.system(size: 32))
+                    .foregroundStyle(AppTheme.fairwayGreen.opacity(0.5))
+                    .symbolEffect(.pulse.byLayer, options: .repeating)
+            }
             Text("No friends yet")
-                .font(.subheadline.bold())
+                .font(.headline)
+            Text("Add friends by code to compare scores, track each other's rounds, and see who plays each hole better.")
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
-            Text("Add a friend by code, or load sample data to preview.")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
                 .multilineTextAlignment(.center)
+                .padding(.horizontal, 8)
             if ck.localFriends.isEmpty {
                 Button {
                     let mock = MockDataGenerator.generateMockFriend()

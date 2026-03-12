@@ -7,45 +7,58 @@ struct HomeView: View {
     @Query(sort: \Course.createdAt) private var courses: [Course]
 
     @State private var activeRound: Round?
-    @State private var showActiveRound = false
+    @State private var showCoursePicker = false
     @State private var showTeeSelector = false
     @State private var selectedCourse: Course?
+    @State private var showRoundExistsAlert = false
+    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
 
     private var completedRounds: [Round] { allRounds.filter(\.isComplete) }
     private var incompleteRounds: [Round] { allRounds.filter { !$0.isComplete } }
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 0) {
-                heroHeader
-                VStack(spacing: 16) {
-                    if let active = incompleteRounds.first {
-                        inProgressCard(active)
-                            .transition(.move(edge: .top).combined(with: .opacity))
-                    }
-                    newRoundButton
-
-                    if !completedRounds.isEmpty {
-                        lastRoundCard
-                        trendCard
-                        completedSection
-                    }
+            VStack(spacing: 16) {
+                if !hasSeenOnboarding {
+                    onboardingCard.staggeredAppear(index: 0)
                 }
-                .padding(.horizontal)
-                .padding(.top, 16)
-                .padding(.bottom, 32)
+                if completedRounds.isEmpty && hasSeenOnboarding {
+                    emptyHeroCard.staggeredAppear(index: 0)
+                }
+                if let active = incompleteRounds.first {
+                    inProgressCard(active)
+                        .staggeredAppear(index: 0)
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
+                newRoundButton.staggeredAppear(index: 1)
+
+                if !completedRounds.isEmpty {
+                    lastRoundCard.staggeredAppear(index: 2)
+                    trendCard.staggeredAppear(index: 3)
+                    completedSection.staggeredAppear(index: 4)
+                }
             }
+            .padding(.horizontal)
+            .padding(.top, 12)
+            .padding(.bottom, 32)
         }
         .background(Color(.systemGroupedBackground))
-        .fullScreenCover(isPresented: $showActiveRound, onDismiss: {
-            activeRound = nil
-        }) {
-            if let round = activeRound {
-                ActiveRoundView(round: round) { showActiveRound = false }
+        .fullScreenCover(item: $activeRound) { round in
+            ActiveRoundView(round: round) { activeRound = nil }
+        }
+        .sheet(isPresented: $showCoursePicker) {
+            CoursePickerView(courses: courses) { course in
+                showCoursePicker = false
+                selectedCourse = course
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    showTeeSelector = true
+                }
             }
+            .presentationDetents([.medium])
+            .presentationCornerRadius(24)
         }
         .sheet(isPresented: $showTeeSelector) {
-            if let course = selectedCourse ?? courses.first {
+            if let course = selectedCourse {
                 TeeSelectionView(course: course) { teeName in
                     showTeeSelector = false
                     createRound(course: course, teeName: teeName)
@@ -54,66 +67,113 @@ struct HomeView: View {
                 .presentationCornerRadius(24)
             }
         }
+        .confirmationDialog("Round in progress", isPresented: $showRoundExistsAlert, titleVisibility: .visible) {
+            Button("Continue current round") {
+                if let existing = incompleteRounds.first {
+                    openRound(existing)
+                }
+            }
+            Button("Discard & start new round", role: .destructive) {
+                discardAndStartNew()
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("You have a round in progress. Starting a new round will discard it.")
+        }
     }
 
-    // MARK: - Hero Header
+    // MARK: - Onboarding
 
-    private var heroHeader: some View {
-        VStack(spacing: 10) {
-            if completedRounds.isEmpty {
-                VStack(spacing: 8) {
-                    Image(systemName: "figure.golf")
-                        .font(.system(size: 36))
-                        .foregroundStyle(AppTheme.gold)
-                    Text("Ready to play?")
-                        .font(.subheadline)
-                        .foregroundStyle(.white.opacity(0.7))
+    private var onboardingCard: some View {
+        VStack(spacing: 16) {
+            HStack {
+                Spacer()
+                Button {
+                    withAnimation(.spring(response: 0.3)) {
+                        hasSeenOnboarding = true
+                    }
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.caption.bold())
+                        .foregroundStyle(.secondary)
+                        .frame(width: 28, height: 28)
+                        .background(Color(.systemGray5), in: Circle())
                 }
-            } else {
-                heroStats
+                .buttonStyle(.plain)
+            }
+
+            Image(systemName: "figure.golf")
+                .font(.system(size: 44))
+                .foregroundStyle(AppTheme.fairwayGreen)
+
+            Text("Welcome to GolfTracker")
+                .font(.title3.bold())
+
+            VStack(alignment: .leading, spacing: 12) {
+                onboardingStep(icon: "1.circle.fill", color: AppTheme.fairwayGreen,
+                               title: "Track rounds", detail: "Log every shot hole-by-hole")
+                onboardingStep(icon: "2.circle.fill", color: AppTheme.gold,
+                               title: "Analyze your game", detail: "Charts, trends, and per-hole stats")
+                onboardingStep(icon: "3.circle.fill", color: AppTheme.eagle,
+                               title: "Compete with friends", detail: "Compare scores and see who plays better")
+            }
+            .padding(.horizontal, 8)
+
+            Button {
+                withAnimation(.spring(response: 0.3)) {
+                    hasSeenOnboarding = true
+                }
+                Haptics.light()
+            } label: {
+                Text("Get started")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(AppTheme.headerGradient, in: RoundedRectangle(cornerRadius: 12))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(20)
+        .background(AppTheme.cardBackground, in: RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
+        .shadow(color: .black.opacity(0.08), radius: 12, y: 4)
+    }
+
+    private func onboardingStep(icon: String, color: Color, title: String, detail: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundStyle(color)
+                .frame(width: 30)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title)
+                    .font(.subheadline.bold())
+                Text(detail)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
-        .padding(.vertical, 16)
-        .frame(maxWidth: .infinity)
-        .background(
-            LinearGradient(colors: [AppTheme.darkGreen, AppTheme.fairwayGreen, AppTheme.darkGreen.opacity(0.9)],
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
-        )
     }
 
-    private var heroStats: some View {
-        let full18 = completedRounds.filter(\.hasFull18)
-        let avg18: String = full18.isEmpty ? "—" : String(format: "%.0f", Double(full18.map(\.totalScore).reduce(0, +)) / Double(full18.count))
-        let best: String = full18.isEmpty ? "—" : "\(full18.map(\.totalScore).min() ?? 0)"
-        let avgPutts = Double(completedRounds.map(\.totalPutts).reduce(0, +)) / Double(completedRounds.count)
+    // MARK: - Empty Hero
 
-        return HStack(spacing: 0) {
-            heroStat(value: avg18, label: "AVG 18")
-            heroDivider
-            heroStat(value: best, label: "BEST")
-            heroDivider
-            heroStat(value: String(format: "%.0f", avgPutts), label: "PUTTS")
-            heroDivider
-            heroStat(value: "\(completedRounds.count)", label: "ROUNDS")
-        }
-    }
-
-    private func heroStat(value: String, label: String) -> some View {
-        VStack(spacing: 3) {
-            Text(value)
-                .font(.system(size: 24, weight: .bold, design: .rounded).monospacedDigit())
+    private var emptyHeroCard: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "figure.golf")
+                .font(.system(size: 38))
                 .foregroundStyle(AppTheme.gold)
-            Text(label)
-                .font(.system(size: 9, weight: .bold))
-                .foregroundStyle(.white.opacity(0.5))
+                .symbolEffect(.pulse.byLayer, options: .repeating)
+            Text("Ready to play?")
+                .font(.headline)
+            Text("Start your first round to begin tracking.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
-    }
-
-    private var heroDivider: some View {
-        Rectangle()
-            .fill(.white.opacity(0.15))
-            .frame(width: 1, height: 36)
+        .padding(.vertical, 28)
+        .background(AppTheme.cardBackground, in: RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
+        .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
     }
 
     // MARK: - In Progress Card
@@ -394,17 +454,32 @@ struct HomeView: View {
     // MARK: - Actions
 
     private func handlePlusTap() {
-        if let existing = incompleteRounds.first {
-            openRound(existing)
+        if incompleteRounds.first != nil {
+            showRoundExistsAlert = true
         } else {
+            startNewRoundFlow()
+        }
+    }
+
+    private func startNewRoundFlow() {
+        if courses.count == 1 {
             selectedCourse = courses.first
             showTeeSelector = true
+        } else {
+            showCoursePicker = true
         }
+    }
+
+    private func discardAndStartNew() {
+        for round in incompleteRounds {
+            modelContext.delete(round)
+        }
+        try? modelContext.save()
+        startNewRoundFlow()
     }
 
     private func openRound(_ round: Round) {
         activeRound = round
-        showActiveRound = true
     }
 
     private func createRound(course: Course, teeName: String) {
@@ -426,6 +501,64 @@ struct HomeView: View {
         try? modelContext.save()
         Haptics.success()
         openRound(round)
+    }
+}
+
+// MARK: - Course Picker
+
+struct CoursePickerView: View {
+    let courses: [Course]
+    var onSelect: (Course) -> Void
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 10) {
+                    ForEach(courses) { course in
+                        Button {
+                            Haptics.medium()
+                            onSelect(course)
+                        } label: {
+                            HStack(spacing: 14) {
+                                if let logo = course.logoImage {
+                                    Image(uiImage: logo)
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 40, height: 40)
+                                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color(.systemGray4), lineWidth: 0.5))
+                                } else {
+                                    Image(systemName: "flag.fill")
+                                        .font(.title3)
+                                        .foregroundStyle(AppTheme.fairwayGreen)
+                                        .frame(width: 40, height: 40)
+                                        .background(AppTheme.fairwayGreen.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+                                }
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(course.name)
+                                        .font(.headline)
+                                        .foregroundStyle(.primary)
+                                    Text("\(course.sortedHoles.count) holes · Par \(course.totalPar) · \(course.teeInfos.count) tees")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.bold())
+                                    .foregroundStyle(.tertiary)
+                            }
+                            .padding(14)
+                            .background(AppTheme.cardBackground, in: RoundedRectangle(cornerRadius: 12))
+                            .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding()
+            }
+            .navigationTitle("Select course")
+            .navigationBarTitleDisplayMode(.inline)
+        }
     }
 }
 

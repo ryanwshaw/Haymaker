@@ -71,6 +71,101 @@ enum AppTheme {
     }
 }
 
+// MARK: - Animated Number
+
+struct AnimatedNumber: View, Animatable {
+    var value: Double
+    var format: String
+    var animatableData: Double {
+        get { value }
+        set { value = newValue }
+    }
+
+    var body: some View {
+        Text(String(format: format, value))
+    }
+}
+
+// MARK: - Staggered Card Modifier
+
+struct StaggeredAppear: ViewModifier {
+    let index: Int
+    @State private var appeared = false
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(appeared ? 1 : 0)
+            .offset(y: appeared ? 0 : 18)
+            .onAppear {
+                withAnimation(.spring(response: 0.45, dampingFraction: 0.8).delay(Double(index) * 0.06)) {
+                    appeared = true
+                }
+            }
+    }
+}
+
+extension View {
+    func staggeredAppear(index: Int) -> some View {
+        modifier(StaggeredAppear(index: index))
+    }
+}
+
+// MARK: - Shimmer Effect
+
+struct ShimmerModifier: ViewModifier {
+    @State private var phase: CGFloat = 0
+
+    func body(content: Content) -> some View {
+        content
+            .overlay(
+                GeometryReader { geo in
+                    LinearGradient(
+                        colors: [.clear, .white.opacity(0.12), .clear],
+                        startPoint: .leading, endPoint: .trailing
+                    )
+                    .frame(width: geo.size.width * 0.6)
+                    .offset(x: -geo.size.width * 0.3 + phase * (geo.size.width * 1.6))
+                    .onAppear {
+                        withAnimation(.linear(duration: 1.5).repeatForever(autoreverses: false)) {
+                            phase = 1
+                        }
+                    }
+                }
+                .mask(content)
+            )
+    }
+}
+
+extension View {
+    func shimmer() -> some View {
+        modifier(ShimmerModifier())
+    }
+}
+
+// MARK: - Skeleton Loading Card
+
+struct SkeletonCard: View {
+    var height: CGFloat = 80
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            RoundedRectangle(cornerRadius: 4)
+                .fill(Color(.systemGray5))
+                .frame(width: 100, height: 12)
+            RoundedRectangle(cornerRadius: 4)
+                .fill(Color(.systemGray5))
+                .frame(height: 14)
+            RoundedRectangle(cornerRadius: 4)
+                .fill(Color(.systemGray6))
+                .frame(width: 160, height: 10)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, minHeight: height, alignment: .topLeading)
+        .background(AppTheme.cardBackground, in: RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
+        .shimmer()
+    }
+}
+
 struct Haptics {
     static func light() {
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
