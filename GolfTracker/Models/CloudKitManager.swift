@@ -18,7 +18,42 @@ final class CloudKitManager: ObservableObject {
     @Published var iCloudAvailable = false
     @Published var isLoading = false
 
-    private init() {}
+    @Published var localFriends: [LocalFriend] = []
+    @Published var localFriendRounds: [String: [SharedRoundSummary]] = [:]
+
+    private init() {
+        loadLocalFriends()
+    }
+
+    // MARK: - Local Friends Persistence
+
+    private static let localFriendsKey = "localFriends"
+
+    private func loadLocalFriends() {
+        if let data = UserDefaults.standard.data(forKey: Self.localFriendsKey),
+           let friends = try? JSONDecoder().decode([LocalFriend].self, from: data) {
+            localFriends = friends
+        }
+    }
+
+    private func saveLocalFriends() {
+        if let data = try? JSONEncoder().encode(localFriends) {
+            UserDefaults.standard.set(data, forKey: Self.localFriendsKey)
+        }
+    }
+
+    func addLocalFriend(_ friend: LocalFriend, rounds: [SharedRoundSummary]) {
+        localFriends.removeAll { $0.id == friend.id }
+        localFriends.append(friend)
+        localFriendRounds[friend.id] = rounds
+        saveLocalFriends()
+    }
+
+    func removeLocalFriend(_ friend: LocalFriend) {
+        localFriends.removeAll { $0.id == friend.id }
+        localFriendRounds.removeValue(forKey: friend.id)
+        saveLocalFriends()
+    }
 
     // MARK: - Setup
 

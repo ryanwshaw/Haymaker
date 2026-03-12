@@ -114,6 +114,115 @@ struct MockDataGenerator {
         try? context.save()
     }
 
+    // MARK: - Mock Friend Data
+
+    static func generateMockFriend() -> (friend: LocalFriend, rounds: [SharedRoundSummary]) {
+        let friend = LocalFriend(id: "mock-jake", name: "Jake", code: "HMK-J4K3")
+
+        let tees = ["Gold", "Gold", "White", "Gold", "White",
+                     "Gold", "Gold", "White", "Gold", "White",
+                     "Gold", "White", "Gold", "White", "Gold"]
+
+        let driveResults = ["fairway", "fairway", "fairway", "fairway", "rough_left", "rough_right", "fairway"]
+        let greenResults = ["green", "green", "green", "green", "short", "long", "left", "green"]
+
+        var rounds: [SharedRoundSummary] = []
+
+        for i in 0..<15 {
+            let daysAgo = Double(i * 6 + seeded(i + 777, max: 5))
+            let date = Calendar.current.date(byAdding: .day, value: -Int(daysAgo), to: .now)!
+            let teeName = tees[i]
+
+            var holeScores: [SharedHoleScore] = []
+            var totalScore = 0
+            var totalPutts = 0
+            var totalPar = 0
+
+            for holeNum in 1...18 {
+                let info = Haymaker.hole(holeNum)
+                let isPar3 = info.par == 3
+                let seed = (i + 50) * 18 + holeNum + 3000
+
+                let roll = seeded(seed, max: 100)
+                let scoreDelta: Int
+                if roll < 5 { scoreDelta = -2 }
+                else if roll < 25 { scoreDelta = -1 }
+                else if roll < 58 { scoreDelta = 0 }
+                else if roll < 82 { scoreDelta = 1 }
+                else if roll < 94 { scoreDelta = 2 }
+                else { scoreDelta = 3 }
+
+                let score = max(info.par + scoreDelta, 1)
+                let puttRoll = seeded(seed + 600, max: 100)
+                let putts = puttRoll < 12 ? 1 : (puttRoll < 80 ? 2 : 3)
+
+                let teeResult: String
+                if isPar3 {
+                    teeResult = pick(greenResults, seed: seed + 150)
+                } else {
+                    teeResult = pick(driveResults, seed: seed + 150)
+                }
+
+                let approachResult: String
+                let approachDist: Int
+                if isPar3 {
+                    approachResult = ""
+                    approachDist = 0
+                } else {
+                    approachResult = pick(greenResults, seed: seed + 250)
+                    let base = info.par == 5 ? 180 : 130
+                    approachDist = ((base + seeded(seed + 251, max: 70) - 35) / 10) * 10
+                }
+
+                let hitFairway = teeResult == "fairway"
+                let hitGreen = isPar3 ? (teeResult == "green") : (approachResult == "green")
+
+                holeScores.append(SharedHoleScore(
+                    holeNumber: holeNum,
+                    score: score,
+                    par: info.par,
+                    putts: putts,
+                    teeResult: teeResult,
+                    approachResult: approachResult,
+                    approachDistance: approachDist,
+                    hitFairway: hitFairway,
+                    hitGreen: hitGreen
+                ))
+
+                totalScore += score
+                totalPutts += putts
+                totalPar += info.par
+            }
+
+            let front9 = holeScores.filter { $0.holeNumber <= 9 }
+            let back9 = holeScores.filter { $0.holeNumber >= 10 }
+            let fwyPossible = holeScores.filter { $0.par != 3 }
+            let fwyHit = fwyPossible.filter(\.hitFairway)
+            let girHit = holeScores.filter(\.hitGreen)
+
+            rounds.append(SharedRoundSummary(
+                id: "mock-jake-\(i)",
+                courseName: "Haymaker",
+                tee: teeName,
+                date: date,
+                totalScore: totalScore,
+                scoreToPar: totalScore - totalPar,
+                holesPlayed: 18,
+                totalPutts: totalPutts,
+                fairwayPct: fwyPossible.isEmpty ? 0 : Double(fwyHit.count) / Double(fwyPossible.count) * 100,
+                girPct: Double(girHit.count) / Double(holeScores.count) * 100,
+                front9Score: front9.map(\.score).reduce(0, +),
+                back9Score: back9.map(\.score).reduce(0, +),
+                hasFull18: true,
+                hasFront9: true,
+                hasBack9: true,
+                holeScores: holeScores
+            ))
+        }
+
+        return (friend, rounds)
+    }
+
     private static func seeded(_ seed: Int, max: Int) -> Int {
         var s = UInt64(abs(seed) &+ 0x9E3779B9)
         s = (s ^ (s >> 16)) &* 0x45d9f3b

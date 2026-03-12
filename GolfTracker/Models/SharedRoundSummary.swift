@@ -1,6 +1,15 @@
 import CloudKit
 import Foundation
 
+// MARK: - Local Friend (for mock/offline friends)
+
+struct LocalFriend: Identifiable, Codable {
+    let id: String
+    let name: String
+    let code: String
+}
+
+
 struct SharedHoleScore {
     let holeNumber: Int
     let score: Int

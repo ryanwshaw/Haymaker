@@ -77,6 +77,7 @@ struct SocialView: View {
         ScrollView {
             VStack(spacing: 18) {
                 profileCard
+                addFriendButton
                 if !ck.pendingRequests.isEmpty {
                     pendingRequestsCard
                 }
@@ -86,11 +87,38 @@ struct SocialView: View {
             .padding()
             .animation(.spring(response: 0.35), value: ck.friends.count)
             .animation(.spring(response: 0.35), value: ck.pendingRequests.count)
+            .animation(.spring(response: 0.35), value: ck.localFriends.count)
         }
         .refreshable {
             await ck.fetchFriends()
             await ck.fetchPendingRequests()
         }
+    }
+
+    // MARK: - Add Friend Button
+
+    private var addFriendButton: some View {
+        Button {
+            friendCode = ""
+            lookupError = nil
+            showAddFriend = true
+        } label: {
+            HStack {
+                Image(systemName: "person.badge.plus")
+                    .font(.body.bold())
+                Text("Add Friend by Code")
+                    .font(.subheadline.bold())
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption.bold())
+                    .foregroundStyle(AppTheme.darkGreen.opacity(0.5))
+            }
+            .foregroundStyle(AppTheme.darkGreen)
+            .padding(16)
+            .background(AppTheme.gold, in: RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
+            .shadow(color: AppTheme.gold.opacity(0.3), radius: 6, y: 2)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Profile Card
@@ -226,34 +254,33 @@ struct SocialView: View {
 
     // MARK: - Friends Card
 
+    private var totalFriendCount: Int { ck.friends.count + ck.localFriends.count }
+
     private var friendsCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Friends")
-                    .font(.subheadline.bold())
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Button {
-                    friendCode = ""
-                    lookupError = nil
-                    showAddFriend = true
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "person.badge.plus")
-                            .font(.caption.bold())
-                        Text("Add")
-                            .font(.caption.bold())
-                    }
-                    .foregroundStyle(AppTheme.gold)
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.horizontal, 4)
+            Text("Friends (\(totalFriendCount))")
+                .font(.subheadline.bold())
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 4)
 
-            if ck.friends.isEmpty {
+            if totalFriendCount == 0 {
                 emptyFriendsCard
             } else {
                 VStack(spacing: 0) {
+                    ForEach(Array(ck.localFriends.enumerated()), id: \.element.id) { i, localFriend in
+                        NavigationLink {
+                            LocalFriendProfileView(
+                                friend: localFriend,
+                                friendRounds: ck.localFriendRounds[localFriend.id] ?? []
+                            )
+                        } label: {
+                            localFriendRow(localFriend)
+                        }
+                        .buttonStyle(.plain)
+                        if i < ck.localFriends.count - 1 || !ck.friends.isEmpty {
+                            Divider().padding(.leading, 56)
+                        }
+                    }
                     ForEach(Array(ck.friends.enumerated()), id: \.element.recordID) { i, friendship in
                         NavigationLink {
                             FriendProfileView(friendship: friendship)
@@ -274,22 +301,67 @@ struct SocialView: View {
     }
 
     private var emptyFriendsCard: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 16) {
             Image(systemName: "person.2")
                 .font(.title2)
                 .foregroundStyle(.secondary)
             Text("No friends yet")
                 .font(.subheadline.bold())
                 .foregroundStyle(.secondary)
-            Text("Share your code or add a friend to start comparing stats.")
+            Text("Add a friend by code, or load sample data to preview.")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
                 .multilineTextAlignment(.center)
+            if ck.localFriends.isEmpty {
+                Button {
+                    let mock = MockDataGenerator.generateMockFriend()
+                    ck.addLocalFriend(mock.friend, rounds: mock.rounds)
+                    Haptics.success()
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "wand.and.stars")
+                        Text("Load sample friend")
+                    }
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                    .background(AppTheme.fairwayGreen, in: Capsule())
+                }
+                .buttonStyle(.plain)
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 24)
         .background(AppTheme.cardBackground, in: RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
         .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
+    }
+
+    private func localFriendRow(_ friend: LocalFriend) -> some View {
+        let roundCount = ck.localFriendRounds[friend.id]?.count ?? 0
+        return HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(AppTheme.eagle.opacity(0.12))
+                    .frame(width: 40, height: 40)
+                Text(String(friend.name.prefix(1)).uppercased())
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .foregroundStyle(AppTheme.eagle)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(friend.name)
+                    .font(.subheadline.bold())
+                Text("\(friend.code) · \(roundCount) rounds")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.caption.bold())
+                .foregroundStyle(.quaternary)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
     }
 
     private func friendRow(_ friendship: CKRecord) -> some View {
