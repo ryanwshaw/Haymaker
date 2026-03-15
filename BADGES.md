@@ -7,9 +7,9 @@
 | 5 fairways in a row | Fairway Finder | |
 | 10 fairways in a row | Fairway Frenzy | |
 | Hit all 14 fairways in a round | | |
-| 5 greens in regulation in a row | Firing Darts | |
+| 5 greens in regulation in a row | Rippin Darts | |
 | 10 GIR in a row | Dialed | |
-| 15 GIR in a row | | |
+| 15 GIR in a row |Green Goblin | |
 | All 18 GIR | | |
 | 5 one putts in a row | Shanananananana | |
 | 10 one putts in a row | Yes Chef | |
