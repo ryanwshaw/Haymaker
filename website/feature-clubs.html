@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Club Suggestions & Booze Tracking — HomeCourse Hero</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --green: #508660;
+            --green-dark: #3a6b4a;
+            --green-light: #6aaa7a;
+            --mauve: #c8adbb;
+            --mauve-light: #ddc8d4;
+            --mauve-glow: rgba(200, 173, 187, 0.14);
+            --gold: #C2A04D;
+            --gold-light: #D4B96A;
+            --bg: #0d1510;
+            --bg-card: #141e17;
+            --bg-card-hover: #1a2a1e;
+            --text: #F0F5EE;
+            --text-muted: #90b898;
+            --text-dim: #5a7860;
+            --border: rgba(200, 173, 187, 0.14);
+            --radius: 16px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg); color: var(--text);
+            overflow-x: hidden; -webkit-font-smoothing: antialiased;
+        }
+        .glow-orb { position: fixed; border-radius: 50%; filter: blur(120px); pointer-events: none; z-index: 0; }
+        .glow-1 { width: 600px; height: 600px; background: rgba(80, 134, 96, 0.15); top: -200px; left: -200px; }
+        .glow-2 { width: 500px; height: 500px; background: rgba(200, 173, 187, 0.1); top: 40%; right: -200px; }
+        .glow-3 { width: 700px; height: 700px; background: rgba(80, 134, 96, 0.1); bottom: -300px; left: 30%; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            background: rgba(13, 21, 16, 0.8); border-bottom: 1px solid var(--border);
+        }
+        nav .container { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+        .nav-brand {
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .nav-brand img {
+            height: 38px;
+            width: 38px;
+            display: block;
+            border-radius: 9px;
+            object-fit: cover;
+        }
+        .nav-brand-text {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 17px;
+            color: var(--text);
+            letter-spacing: 0.02em;
+        }
+        
+        .nav-links { display: flex; gap: 32px; align-items: center; }
+        .nav-links a { font-size: 14px; font-weight: 500; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+        .nav-links a:hover { color: var(--text); }
+        .nav-cta { font-size: 13px !important; font-weight: 600 !important; color: var(--bg) !important; background: var(--mauve); padding: 8px 20px; border-radius: 8px; transition: all 0.2s; }
+        .nav-cta:hover { background: var(--mauve-light); transform: translateY(-1px); }
+
+        .hero { padding: 140px 0 60px; text-align: center; }
+        .section-label { font-size: 12px; font-weight: 700; color: var(--mauve); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px; }
+        .hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(36px, 6vw, 64px); font-weight: 900; line-height: 1.08; margin-bottom: 20px; }
+        .hero h1 span { color: var(--mauve); }
+        .hero p { font-size: 18px; color: var(--text-muted); max-width: 580px; margin: 0 auto; line-height: 1.7; }
+
+        .section-title { font-family: 'Playfair Display', serif; font-size: clamp(24px, 3.5vw, 36px); margin-bottom: 12px; }
+        .section-title span { color: var(--mauve); }
+
+        /* Bag Editor Section */
+        .bag-section { padding: 60px 0 80px; }
+        .bag-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
+        .bag-info h2 { margin-bottom: 16px; }
+        .bag-info p { font-size: 15px; color: var(--text-muted); line-height: 1.7; margin-bottom: 20px; }
+        .bag-features { display: flex; flex-direction: column; gap: 14px; }
+        .bag-feat {
+            display: flex; gap: 14px; align-items: flex-start;
+            padding: 16px; background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 14px; transition: all 0.3s;
+        }
+        .bag-feat:hover { background: var(--bg-card-hover); transform: translateX(4px); }
+        .bag-feat-icon {
+            width: 36px; height: 36px; flex-shrink: 0;
+            background: var(--mauve-glow); border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; font-size: 16px;
+        }
+        .bag-feat h4 { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+        .bag-feat p { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+        /* Bag Mock */
+        .bag-mock {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 20px; overflow: hidden;
+        }
+        .bag-mock-header {
+            padding: 20px 24px; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .bag-mock-header h3 { font-size: 16px; font-weight: 700; }
+        .bag-mock-count { font-size: 11px; color: var(--text-dim); font-weight: 600; }
+        .club-item {
+            display: flex; align-items: center; gap: 14px; padding: 14px 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.2s;
+        }
+        .club-item:last-child { border-bottom: none; }
+        .club-item:hover { background: rgba(255,255,255,0.02); }
+        .club-icon {
+            width: 36px; height: 36px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 800; flex-shrink: 0;
+        }
+        .club-icon.wood { background: rgba(80,134,96,0.2); color: var(--green-light); }
+        .club-icon.iron { background: var(--mauve-glow); color: var(--mauve); }
+        .club-icon.wedge { background: rgba(194,160,77,0.15); color: var(--gold-light); }
+        .club-icon.putter { background: rgba(255,255,255,0.06); color: var(--text-muted); }
+        .club-info { flex: 1; }
+        .club-name { font-size: 14px; font-weight: 700; }
+        .club-detail { font-size: 11px; color: var(--text-dim); margin-top: 1px; }
+        .club-yardage {
+            font-size: 15px; font-weight: 800; color: var(--mauve);
+            font-variant-numeric: tabular-nums;
+        }
+        .club-yardage-label { font-size: 9px; color: var(--text-dim); text-align: right; }
+
+        /* Suggestion Mock */
+        .suggest-section { padding: 60px 0; }
+        .suggest-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+        .suggest-mock {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 20px; padding: 28px;
+        }
+        .suggest-header {
+            text-align: center; margin-bottom: 20px;
+        }
+        .suggest-distance {
+            font-size: 48px; font-weight: 900; color: var(--text);
+            font-variant-numeric: tabular-nums;
+        }
+        .suggest-distance-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+        .suggest-cards { display: flex; flex-direction: column; gap: 10px; }
+        .suggest-card {
+            display: flex; align-items: center; gap: 14px;
+            padding: 14px 18px; border-radius: 14px;
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+            transition: all 0.3s;
+        }
+        .suggest-card.recommended {
+            background: var(--mauve-glow); border-color: rgba(200,173,187,0.3);
+        }
+        .suggest-card-icon {
+            width: 40px; height: 40px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 800;
+        }
+        .suggest-card.recommended .suggest-card-icon {
+            background: linear-gradient(135deg, var(--mauve), #a8889e); color: var(--bg);
+        }
+        .suggest-card:not(.recommended) .suggest-card-icon {
+            background: rgba(255,255,255,0.06); color: var(--text-dim);
+        }
+        .suggest-card-info { flex: 1; }
+        .suggest-club-name { font-size: 14px; font-weight: 700; }
+        .suggest-club-range { font-size: 11px; color: var(--text-dim); margin-top: 1px; }
+        .suggest-badge {
+            font-size: 9px; font-weight: 700; color: var(--bg);
+            background: var(--mauve); padding: 3px 8px; border-radius: 4px;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        /* Booze Section */
+        .booze-section { padding: 80px 0; }
+        .booze-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: start; }
+        .booze-info h2 { margin-bottom: 16px; }
+        .booze-info p { font-size: 15px; color: var(--text-muted); line-height: 1.7; margin-bottom: 20px; }
+
+        .booze-mock {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 20px; padding: 28px;
+        }
+        .booze-mock-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+        .booze-mock-sub { font-size: 11px; color: var(--text-dim); margin-bottom: 20px; }
+
+        .drink-tracker {
+            display: flex; gap: 10px; justify-content: center; margin-bottom: 24px;
+        }
+        .drink-icon {
+            width: 48px; height: 48px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06); transition: all 0.2s;
+            cursor: default;
+        }
+        .drink-icon.active { background: rgba(194,160,77,0.15); border-color: rgba(194,160,77,0.3); }
+        .drink-count {
+            text-align: center; margin-bottom: 20px;
+        }
+        .drink-count-val { font-size: 36px; font-weight: 900; color: var(--gold-light); font-variant-numeric: tabular-nums; }
+        .drink-count-label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+
+        .booze-correlation {
+            background: rgba(255,255,255,0.03); border-radius: 14px; padding: 18px;
+        }
+        .booze-corr-title { font-size: 12px; font-weight: 700; margin-bottom: 12px; color: var(--text-muted); }
+        .booze-corr-row {
+            display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
+        }
+        .booze-corr-row:last-child { margin-bottom: 0; }
+        .booze-corr-label { font-size: 12px; font-weight: 600; color: var(--text-dim); min-width: 80px; }
+        .booze-corr-bar-track { flex: 1; height: 20px; background: rgba(255,255,255,0.04); border-radius: 6px; overflow: hidden; position: relative; }
+        .booze-corr-bar {
+            height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 8px;
+            font-size: 11px; font-weight: 700; transition: width 0.6s ease;
+        }
+        .booze-bar-green { background: linear-gradient(90deg, var(--green), var(--green-light)); color: var(--bg); }
+        .booze-bar-gold { background: linear-gradient(90deg, var(--gold), var(--gold-light)); color: var(--bg); }
+        .booze-bar-red { background: linear-gradient(90deg, #c05050, #E87070); color: var(--bg); }
+
+        .booze-insight {
+            margin-top: 14px; padding: 12px 16px;
+            background: rgba(194,160,77,0.08); border: 1px solid rgba(194,160,77,0.15);
+            border-radius: 10px; display: flex; gap: 10px; align-items: flex-start;
+        }
+        .booze-insight-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+        .booze-insight p { font-size: 12px; color: var(--gold-light); line-height: 1.5; }
+
+        /* CTA */
+        .cta-section { padding: 80px 0; text-align: center; }
+        .cta-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 24px; padding: 56px 40px; max-width: 600px; margin: 0 auto;
+        }
+        .cta-card h2 { font-family: 'Playfair Display', serif; font-size: clamp(24px, 3.5vw, 36px); margin-bottom: 12px; }
+        .cta-card p { font-size: 15px; color: var(--text-muted); line-height: 1.7; margin-bottom: 28px; }
+        .btn-cta {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-size: 15px; font-weight: 700; padding: 14px 32px;
+            border-radius: 12px; text-decoration: none;
+            background: linear-gradient(135deg, #c8adbb, #a8889e);
+            color: var(--bg); transition: all 0.25s; border: none; cursor: pointer;
+            box-shadow: 0 4px 24px rgba(200,173,187,0.2);
+        }
+        .btn-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(200,173,187,0.3); }
+
+        footer { border-top: 1px solid var(--border); padding: 32px 0; }
+        footer .container { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+        .footer-brand { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: var(--text); }
+        .footer-brand span { color: var(--mauve); }
+        .footer-links { display: flex; gap: 24px; }
+        .footer-links a { font-size: 13px; color: var(--text-dim); text-decoration: none; transition: color 0.2s; }
+        .footer-links a:hover { color: var(--text-muted); }
+
+        .fade-up { opacity: 0; transform: translateY(24px); transition: all 0.6s ease; }
+        .fade-up.visible { opacity: 1; transform: translateY(0); }
+
+        @media (max-width: 768px) {
+            .bag-layout, .suggest-layout, .booze-layout { grid-template-columns: 1fr; }
+            .suggest-mock { order: -1; }
+            .nav-links { gap: 16px; }
+            .nav-links a:not(.nav-cta) { display: none; }
+            .cta-card { padding: 40px 24px; }
+            footer .container { justify-content: center; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="glow-orb glow-1"></div>
+<div class="glow-orb glow-2"></div>
+<div class="glow-orb glow-3"></div>
+
+<nav>
+    <div class="container">
+        <a href="index.html" class="nav-brand"><img src="images/icon-76.png" alt="HomeCourse Hero"><span class="nav-brand-text">HomeCourse Hero</span></a>
+        <div class="nav-links">
+            <a href="index.html#features">Features</a>
+            <a href="index.html#insights">Deep Stats</a>
+            <a href="badges.html">Badges</a>
+            <a href="https://apps.apple.com/us/app/homecourse-hero/id6761485344" target="_blank" rel="noopener" class="nav-cta">Get the App</a>
+        </div>
+    </div>
+</nav>
+
+<section class="hero">
+    <div class="container">
+        <div class="section-label">Club Setup & Extras</div>
+        <h1 class="fade-up">Set Up Your Bag,<br>Skip the <span>Math</span></h1>
+        <p class="fade-up">Add your clubs with yardages, get smart suggestions during your round, and track the important stuff — like how many drinks deep you are.</p>
+    </div>
+</section>
+
+<!-- Bag Editor -->
+<section class="bag-section">
+    <div class="container">
+        <div class="bag-layout">
+            <div class="bag-info">
+                <div class="section-label">Your Bag</div>
+                <h2 class="section-title fade-up">Build Your <span>Club Profile</span></h2>
+                <p class="fade-up">Enter each club and its yardage. HomeCourse Hero uses this to suggest the right club during your round based on distance to the pin.</p>
+                <div class="bag-features">
+                    <div class="bag-feat fade-up">
+                        <div class="bag-feat-icon">🏷️</div>
+                        <div>
+                            <h4>Custom Club Names</h4>
+                            <p>Name your clubs however you want — "Driver", "Big Dog", "3W" — it's your bag.</p>
+                        </div>
+                    </div>
+                    <div class="bag-feat fade-up">
+                        <div class="bag-feat-icon">📏</div>
+                        <div>
+                            <h4>Set Your Yardages</h4>
+                            <p>Enter your carry or total distance for each club. Update them anytime as your game evolves.</p>
+                        </div>
+                    </div>
+                    <div class="bag-feat fade-up">
+                        <div class="bag-feat-icon">💡</div>
+                        <div>
+                            <h4>Auto-Suggest During Rounds</h4>
+                            <p>Enter your approach distance and HomeCourse Hero instantly tells you which club fits.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bag-mock fade-up">
+                <div class="bag-mock-header">
+                    <h3>My Bag</h3>
+                    <span class="bag-mock-count">14 clubs</span>
+                </div>
+                <div class="club-item">
+                    <div class="club-icon wood">DR</div>
+                    <div class="club-info">
+                        <div class="club-name">Driver</div>
+                        <div class="club-detail">TaylorMade Qi10</div>
+                    </div>
+                    <div>
+                        <div class="club-yardage">255</div>
+                        <div class="club-yardage-label">yds</div>
+                    </div>
+                </div>
+                <div class="club-item">
+                    <div class="club-icon wood">3W</div>
+                    <div class="club-info">
+                        <div class="club-name">3 Wood</div>
+                        <div class="club-detail">Callaway Paradym</div>
+                    </div>
+                    <div>
+                        <div class="club-yardage">230</div>
+                        <div class="club-yardage-label">yds</div>
+                    </div>
+                </div>
+                <div class="club-item">
+                    <div class="club-icon iron">5i</div>
+                    <div class="club-info">
+                        <div class="club-name">5 Iron</div>
+                        <div class="club-detail">Titleist T200</div>
+                    </div>
+                    <div>
+                        <div class="club-yardage">190</div>
+                        <div class="club-yardage-label">yds</div>
+                    </div>
+                </div>
+                <div class="club-item">
+                    <div class="club-icon iron">7i</div>
+                    <div class="club-info">
+                        <div class="club-name">7 Iron</div>
+                        <div class="club-detail">Titleist T200</div>
+                    </div>
+                    <div>
+                        <div class="club-yardage">165</div>
+                        <div class="club-yardage-label">yds</div>
+                    </div>
+                </div>
+                <div class="club-item">
+                    <div class="club-icon iron">9i</div>
+                    <div class="club-info">
+                        <div class="club-name">9 Iron</div>
+                        <div class="club-detail">Titleist T200</div>
+                    </div>
+                    <div>
+                        <div class="club-yardage">140</div>
+                        <div class="club-yardage-label">yds</div>
+                    </div>
+                </div>
+                <div class="club-item">
+                    <div class="club-icon wedge">PW</div>
+                    <div class="club-info">
+                        <div class="club-name">Pitching Wedge</div>
+                        <div class="club-detail">Vokey SM10</div>
+                    </div>
+                    <div>
+                        <div class="club-yardage">125</div>
+                        <div class="club-yardage-label">yds</div>
+                    </div>
+                </div>
+                <div class="club-item">
+                    <div class="club-icon wedge">56</div>
+                    <div class="club-info">
+                        <div class="club-name">Sand Wedge</div>
+                        <div class="club-detail">Vokey SM10</div>
+                    </div>
+                    <div>
+                        <div class="club-yardage">95</div>
+                        <div class="club-yardage-label">yds</div>
+                    </div>
+                </div>
+                <div class="club-item">
+                    <div class="club-icon putter">PT</div>
+                    <div class="club-info">
+                        <div class="club-name">Putter</div>
+                        <div class="club-detail">Scotty Cameron</div>
+                    </div>
+                    <div>
+                        <div class="club-yardage">—</div>
+                        <div class="club-yardage-label"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Club Suggestion -->
+<section class="suggest-section">
+    <div class="container">
+        <div class="suggest-layout">
+            <div class="suggest-mock fade-up">
+                <div class="suggest-header">
+                    <div style="font-size:10px; font-weight:700; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Hole 7 · Approach</div>
+                    <div class="suggest-distance">152</div>
+                    <div class="suggest-distance-label">yards to pin</div>
+                </div>
+                <div class="suggest-cards">
+                    <div class="suggest-card recommended">
+                        <div class="suggest-card-icon">7i</div>
+                        <div class="suggest-card-info">
+                            <div class="suggest-club-name">7 Iron</div>
+                            <div class="suggest-club-range">Your carry: 165 yds</div>
+                        </div>
+                        <div class="suggest-badge">Best Fit</div>
+                    </div>
+                    <div class="suggest-card">
+                        <div class="suggest-card-icon">8i</div>
+                        <div class="suggest-card-info">
+                            <div class="suggest-club-name">8 Iron</div>
+                            <div class="suggest-club-range">Your carry: 152 yds</div>
+                        </div>
+                    </div>
+                    <div class="suggest-card">
+                        <div class="suggest-card-icon">6i</div>
+                        <div class="suggest-card-info">
+                            <div class="suggest-club-name">6 Iron</div>
+                            <div class="suggest-club-range">Your carry: 178 yds</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="section-label">Smart Suggestions</div>
+                <h2 class="section-title fade-up">The Right Club, <span>Instantly</span></h2>
+                <p class="fade-up" style="font-size:15px; color:var(--text-muted); line-height:1.7; margin-bottom:20px;">When you enter your approach distance during a round, HomeCourse Hero checks your bag and recommends the best club based on your yardages. No more mental math between clubs.</p>
+                <div class="bag-features">
+                    <div class="bag-feat fade-up">
+                        <div class="bag-feat-icon">🎯</div>
+                        <div>
+                            <h4>Distance-Based Matching</h4>
+                            <p>Compares your approach distance to each club's yardage and ranks the best options.</p>
+                        </div>
+                    </div>
+                    <div class="bag-feat fade-up">
+                        <div class="bag-feat-icon">⚡</div>
+                        <div>
+                            <h4>One Tap Selection</h4>
+                            <p>See the suggestion, tap the club, and move on. No scrolling through your full bag.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Booze Tracking -->
+<section id="booze" class="booze-section">
+    <div class="container">
+        <div style="text-align:center; margin-bottom:48px;">
+            <div class="section-label">The Fun Stuff</div>
+            <h2 class="section-title fade-up">Booze <span>Tracking</span></h2>
+            <p class="fade-up" style="font-size:15px; color:var(--text-muted); max-width:520px; margin:0 auto; line-height:1.7;">Log your drinks during the round. See the data. Discover exactly when the wheels fall off.</p>
+        </div>
+        <div class="booze-layout">
+            <div class="booze-mock fade-up">
+                <div class="booze-mock-title">Round Drink Log</div>
+                <div class="booze-mock-sub">Tap to log drinks during your round</div>
+                <div class="drink-tracker">
+                    <div class="drink-icon active">🍺</div>
+                    <div class="drink-icon active">🍺</div>
+                    <div class="drink-icon active">🍺</div>
+                    <div class="drink-icon">🍺</div>
+                    <div class="drink-icon">🍺</div>
+                    <div class="drink-icon">🍺</div>
+                </div>
+                <div class="drink-count">
+                    <div class="drink-count-val">3</div>
+                    <div class="drink-count-label">drinks this round</div>
+                </div>
+                <div class="booze-correlation">
+                    <div class="booze-corr-title">Scoring vs Drinks (your data)</div>
+                    <div class="booze-corr-row">
+                        <span class="booze-corr-label">0 drinks</span>
+                        <div class="booze-corr-bar-track"><div class="booze-corr-bar booze-bar-green" style="width:85%">Avg: 82</div></div>
+                    </div>
+                    <div class="booze-corr-row">
+                        <span class="booze-corr-label">1–2 drinks</span>
+                        <div class="booze-corr-bar-track"><div class="booze-corr-bar booze-bar-green" style="width:80%">Avg: 83</div></div>
+                    </div>
+                    <div class="booze-corr-row">
+                        <span class="booze-corr-label">3–4 drinks</span>
+                        <div class="booze-corr-bar-track"><div class="booze-corr-bar booze-bar-gold" style="width:92%">Avg: 88</div></div>
+                    </div>
+                    <div class="booze-corr-row">
+                        <span class="booze-corr-label">5+ drinks</span>
+                        <div class="booze-corr-bar-track"><div class="booze-corr-bar booze-bar-red" style="width:100%">Avg: 96</div></div>
+                    </div>
+                </div>
+                <div class="booze-insight">
+                    <div class="booze-insight-icon">💡</div>
+                    <p>Your scores jump by <strong>+6 strokes</strong> after 3 drinks. The sweet spot seems to be 1–2 beers.</p>
+                </div>
+            </div>
+            <div class="booze-info">
+                <h2 class="section-title fade-up">See the <span>Correlation</span></h2>
+                <p class="fade-up">We all know drinking on the course is part of the fun. But have you ever wondered exactly how much it costs you? Now you'll know.</p>
+                <div class="bag-features">
+                    <div class="bag-feat fade-up">
+                        <div class="bag-feat-icon">🍺</div>
+                        <div>
+                            <h4>Tap to Log</h4>
+                            <p>Quick one-tap drink logging while you play. Beer, seltzer, cocktail — whatever your poison.</p>
+                        </div>
+                    </div>
+                    <div class="bag-feat fade-up">
+                        <div class="bag-feat-icon">📉</div>
+                        <div>
+                            <h4>Score Correlation</h4>
+                            <p>See your average score broken down by how many drinks you had. The data doesn't lie.</p>
+                        </div>
+                    </div>
+                    <div class="bag-feat fade-up">
+                        <div class="bag-feat-icon">🎯</div>
+                        <div>
+                            <h4>Find Your Sweet Spot</h4>
+                            <p>Some golfers play better with one or two in them. Find your optimal number.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+    <div class="container">
+        <div class="cta-card fade-up">
+            <div style="font-size:48px; margin-bottom:16px;">🏌️</div>
+            <h2>Get Dialed In</h2>
+            <p>Free on the App Store. Set up your bag, track your drinks, and let the app do the thinking for you.</p>
+            <a href="https://apps.apple.com/us/app/homecourse-hero/id6761485344" target="_blank" rel="noopener" class="btn-cta">
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.32 2.32-2.11 4.45-3.74 4.25z" fill="currentColor"/></svg>
+                Download on the App Store
+            </a>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <div class="container">
+        <div class="footer-brand">HomeCourse <span>Hero</span></div>
+        <div class="footer-links">
+            <a href="privacy.html">Privacy</a>
+            <a href="https://apps.apple.com/us/app/homecourse-hero/id6761485344" target="_blank">App Store</a>
+            <a href="mailto:support@homecoursehero.com">Contact</a>
+        </div>
+    </div>
+</footer>
+
+<script>
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.classList.add('visible');
+    });
+}, { threshold: 0.1 });
+document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

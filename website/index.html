@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HomeCourse Hero — Track Your Game. Earn Badges. Compete.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --green: #508660;
+            --green-dark: #3a6b4a;
+            --green-light: #6aaa7a;
+            --mauve: #c8adbb;
+            --mauve-light: #ddc8d4;
+            --mauve-glow: rgba(200, 173, 187, 0.14);
+            --gold: #C2A04D;
+            --gold-light: #D4B96A;
+            --gold-glow: rgba(194, 160, 77, 0.12);
+            --bg: #0d1510;
+            --bg-card: #141e17;
+            --bg-card-hover: #1a2a1e;
+            --text: #F0F5EE;
+            --text-muted: #90b898;
+            --text-dim: #5a7860;
+            --border: rgba(200, 173, 187, 0.12);
+            --radius: 16px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Ambient glow effects */
+        .glow-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .glow-1 { width: 600px; height: 600px; background: rgba(80, 134, 96, 0.15); top: -200px; left: -200px; }
+        .glow-2 { width: 500px; height: 500px; background: rgba(200, 173, 187, 0.1); top: 40%; right: -200px; }
+        .glow-3 { width: 700px; height: 700px; background: rgba(80, 134, 96, 0.1); bottom: -300px; left: 30%; }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+        /* ─── Nav ─── */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            background: rgba(13, 21, 16, 0.8);
+            border-bottom: 1px solid var(--border);
+        }
+        nav .container {
+            display: flex; align-items: center; justify-content: space-between;
+            height: 64px;
+        }
+        .nav-brand {
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .nav-brand img {
+            height: 38px;
+            width: 38px;
+            display: block;
+            border-radius: 9px;
+            object-fit: cover;
+        }
+        .nav-brand-text {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 17px;
+            color: var(--text);
+            letter-spacing: 0.02em;
+        }
+        .nav-links { display: flex; gap: 32px; align-items: center; }
+        .nav-links a {
+            font-size: 14px; font-weight: 500; color: var(--text-muted);
+            text-decoration: none; transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--text); }
+        .nav-cta {
+            font-size: 13px !important; font-weight: 700 !important;
+            color: #1a0f17 !important;
+            background: var(--mauve) !important;
+            padding: 8px 18px !important; border-radius: 20px !important;
+            transition: all 0.2s !important;
+        }
+        .nav-cta:hover { background: var(--mauve-light) !important; transform: translateY(-1px); }
+
+        /* ─── Hero ─── */
+        .hero {
+            padding: 140px 0 80px;
+            text-align: center;
+        }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: linear-gradient(135deg, rgba(200,173,187,0.18), rgba(200,173,187,0.08));
+            border: 1px solid rgba(200, 173, 187, 0.28);
+            border-radius: 100px; padding: 7px 16px;
+            font-size: 12px; font-weight: 700; color: var(--mauve-light);
+            letter-spacing: 0.06em; text-transform: uppercase;
+            margin-bottom: 28px;
+        }
+        .hero-badge::before { content: '✦'; font-size: 10px; color: var(--mauve); }
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(42px, 7vw, 72px);
+            font-weight: 900; line-height: 1.05;
+            margin-bottom: 20px;
+        }
+        .hero h1 em {
+            font-style: normal;
+            background: linear-gradient(135deg, var(--mauve-light), var(--mauve));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero p {
+            font-size: 18px; color: var(--text-muted);
+            max-width: 540px; margin: 0 auto 40px; line-height: 1.6;
+        }
+        .hero-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-size: 15px; font-weight: 600; padding: 14px 28px;
+            border-radius: 12px; text-decoration: none;
+            transition: all 0.25s; cursor: pointer; border: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--mauve), #a8889e);
+            color: #1a0f17;
+            box-shadow: 0 4px 28px rgba(200, 173, 187, 0.35);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 36px rgba(200, 173, 187, 0.5); }
+        .btn-secondary {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .btn-secondary:hover { border-color: var(--mauve); color: var(--mauve); }
+
+        /* ─── Phone Screenshots ─── */
+        .phone-section { padding: 40px 0 80px; }
+        .phone-carousel {
+            display: flex; justify-content: center; gap: 20px;
+            flex-wrap: wrap;
+            padding: 0 20px;
+            align-items: flex-start;
+        }
+        .phone-frame {
+            background: #000;
+            border-radius: 40px;
+            padding: 10px;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
+            width: 200px;
+            flex-shrink: 0;
+            transition: transform 0.4s ease;
+        }
+        .phone-frame.featured {
+            width: 220px;
+            transform: translateY(-12px);
+        }
+        .phone-frame:hover { transform: translateY(-16px); }
+        .phone-frame.featured:hover { transform: translateY(-20px); }
+        .phone-frame img {
+            width: 100%;
+            border-radius: 30px;
+            display: block;
+        }
+        .phone-label {
+            text-align: center;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-top: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .phone-label.featured {
+            color: var(--mauve);
+        }
+
+        /* ─── Features ─── */
+        .features { padding: 80px 0; }
+        .section-label {
+            font-size: 12px; font-weight: 700; color: var(--mauve);
+            text-transform: uppercase; letter-spacing: 2px;
+            text-align: center; margin-bottom: 12px;
+        }
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(28px, 4vw, 42px);
+            text-align: center; margin-bottom: 48px;
+        }
+        .feature-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
+            transition: all 0.3s;
+        }
+        .feature-card:hover {
+            background: var(--bg-card-hover);
+            border-color: rgba(200, 173, 187, 0.3);
+            transform: translateY(-4px);
+        }
+        a.feature-card { text-decoration: none; color: inherit; display: block; }
+        .feature-card-highlight {
+            border-color: rgba(200, 173, 187, 0.25);
+            background: linear-gradient(135deg, var(--bg-card), rgba(200,173,187,0.06));
+        }
+        .feature-icon {
+            width: 48px; height: 48px;
+            background: var(--mauve-glow);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; margin-bottom: 16px;
+        }
+        .feature-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+        .feature-card p { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+
+        /* ─── Course Intelligence ─── */
+        .course-intel { padding: 100px 0; position: relative; overflow: hidden; }
+        .course-intel::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(180deg, transparent, rgba(194,160,77,0.03) 30%, rgba(80,134,96,0.05) 70%, transparent);
+            pointer-events: none;
+        }
+        .ci-header { text-align: center; margin-bottom: 56px; }
+        .ci-header .section-title { margin-bottom: 16px; }
+        .ci-header p { font-size: 17px; color: var(--text-muted); max-width: 620px; margin: 0 auto; line-height: 1.7; }
+
+        .ci-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: start;
+        }
+
+        /* Scorecard mock */
+        .ci-scorecard {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px;
+            position: relative;
+            overflow: hidden;
+        }
+        .ci-scorecard::after {
+            content: '';
+            position: absolute; bottom: -40px; right: -40px;
+            width: 200px; height: 200px;
+            background: radial-gradient(circle, rgba(194,160,77,0.06), transparent 70%);
+            pointer-events: none;
+        }
+        .ci-course-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px; font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .ci-course-sub {
+            font-size: 13px; color: var(--text-dim);
+            margin-bottom: 20px;
+        }
+        .ci-heatmap {
+            display: grid; grid-template-columns: repeat(9, 1fr);
+            gap: 4px; margin-bottom: 20px;
+        }
+        .ci-hole {
+            text-align: center;
+            border-radius: 8px;
+            padding: 6px 0;
+            transition: transform 0.2s;
+        }
+        .ci-hole:hover { transform: scale(1.1); }
+        .ci-hole .h-num {
+            font-size: 9px; font-weight: 700;
+            color: rgba(255,255,255,0.5);
+            display: block; margin-bottom: 2px;
+        }
+        .ci-hole .h-avg {
+            font-size: 14px; font-weight: 800;
+            font-variant-numeric: tabular-nums;
+        }
+        .h-green { background: rgba(34,86,36,0.5); }
+        .h-green .h-avg { color: #6FCF70; }
+        .h-yellow { background: rgba(194,160,77,0.18); }
+        .h-yellow .h-avg { color: var(--gold-light); }
+        .h-red { background: rgba(180,60,60,0.25); }
+        .h-red .h-avg { color: #E87070; }
+        .h-blue { background: rgba(41,100,140,0.3); }
+        .h-blue .h-avg { color: #6BC4E8; }
+        .ci-heatmap-label {
+            display: flex; justify-content: center; gap: 16px;
+            margin-top: 10px;
+        }
+        .ci-heatmap-label span {
+            display: flex; align-items: center; gap: 5px;
+            font-size: 10px; font-weight: 600; color: var(--text-dim);
+        }
+        .ci-heatmap-label .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+        }
+        .ci-summary-row {
+            display: flex; gap: 12px; margin-top: 16px;
+        }
+        .ci-summary-pill {
+            flex: 1; text-align: center;
+            padding: 10px 6px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 10px;
+        }
+        .ci-summary-pill .val {
+            font-size: 18px; font-weight: 800; color: var(--mauve);
+            font-variant-numeric: tabular-nums;
+        }
+        .ci-summary-pill .lbl {
+            font-size: 9px; font-weight: 700; color: var(--text-dim);
+            text-transform: uppercase; letter-spacing: 0.3px;
+            margin-top: 2px;
+        }
+
+        /* Insight cards */
+        .ci-insights {
+            display: flex; flex-direction: column; gap: 14px;
+        }
+        .ci-insight-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px 22px;
+            transition: all 0.3s;
+            display: flex; gap: 16px; align-items: flex-start;
+        }
+        .ci-insight-card:hover {
+            border-color: rgba(194,160,77,0.3);
+            transform: translateX(4px);
+            background: var(--bg-card-hover);
+        }
+        .ci-insight-icon {
+            width: 40px; height: 40px; flex-shrink: 0;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+            background: var(--mauve-glow);
+        }
+        .ci-insight-card h4 {
+            font-size: 15px; font-weight: 700; margin-bottom: 4px;
+        }
+        .ci-insight-card p {
+            font-size: 12px; color: var(--text-muted); line-height: 1.5;
+        }
+        .ci-insight-tag {
+            display: inline-block;
+            font-size: 10px; font-weight: 700;
+            color: var(--mauve); background: var(--mauve-glow);
+            padding: 2px 8px; border-radius: 4px;
+            margin-top: 6px;
+        }
+
+        @media (max-width: 768px) {
+            .ci-layout { grid-template-columns: 1fr; }
+            .ci-heatmap { grid-template-columns: repeat(9, 1fr); gap: 3px; }
+        }
+
+        /* ─── (Match Play styles removed) ─── */
+
+        /* ─── Hole Logging Showcase ─── */
+        .hole-showcase {
+            padding: 80px 0 40px;
+        }
+        .hole-showcase-inner {
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            gap: 48px;
+            align-items: center;
+        }
+        @media (max-width: 768px) {
+            .hole-showcase-inner { grid-template-columns: 1fr; gap: 32px; }
+            .hl-phone-wrap { order: -1; justify-self: center; }
+        }
+
+        .hole-showcase-text h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px; font-weight: 700;
+            margin-bottom: 14px;
+        }
+        .hole-showcase-text h2 em { color: var(--gold); font-style: normal; }
+        .hole-showcase-text > p {
+            font-size: 14px; color: var(--text-muted);
+            line-height: 1.7; margin-bottom: 28px; max-width: 480px;
+        }
+        .hl-steps {
+            display: flex; flex-direction: column; gap: 16px;
+        }
+        .hl-step {
+            display: flex; align-items: flex-start; gap: 14px;
+            padding: 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            transition: all 0.3s;
+        }
+        .hl-step:hover {
+            border-color: rgba(194,160,77,0.3);
+            background: var(--bg-card-hover);
+        }
+        .hl-step-num {
+            width: 28px; height: 28px; flex-shrink: 0;
+            border-radius: 50%;
+            background: var(--green);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 800; color: #fff;
+        }
+        .hl-step-body h4 {
+            font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 3px;
+        }
+        .hl-step-body p {
+            font-size: 12px; color: var(--text-muted); line-height: 1.5;
+        }
+
+        /* Hole logging phone mock */
+        .hl-phone {
+            width: 260px;
+            background: #F2F2F7;
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06);
+        }
+        .hl-nav {
+            background: var(--green-dark);
+            padding: 14px 16px 10px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .hl-nav-title { text-align: center; }
+        .hl-nav-title span { display: block; font-size: 12px; font-weight: 700; color: #fff; }
+        .hl-nav-title small { font-size: 9px; color: rgba(255,255,255,0.5); }
+        .hl-finish {
+            font-size: 9px; font-weight: 700;
+            background: var(--gold); color: var(--green-dark);
+            padding: 4px 12px; border-radius: 20px;
+        }
+        .hl-holes {
+            display: flex; gap: 3px; padding: 6px 10px;
+            background: #EEEEF0;
+        }
+        .hl-hole-cell {
+            width: 26px; height: 32px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            border-radius: 5px; font-size: 8px; font-weight: 700;
+            background: #E0E0E5; color: #8E8E93;
+        }
+        .hl-hole-cell span { font-size: 11px; font-weight: 800; }
+        .hl-hole-cell.active {
+            background: var(--green); color: #fff;
+            outline: 2px solid var(--gold);
+        }
+
+        .hl-body { padding: 0 10px 12px; }
+
+        /* Card sections in the phone */
+        .hl-card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-top: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        .hl-card-step {
+            display: flex; align-items: center; gap: 6px;
+            margin-bottom: 8px;
+        }
+        .hl-card-step .num {
+            width: 16px; height: 16px; border-radius: 50%;
+            background: var(--green);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 8px; font-weight: 800; color: #fff;
+        }
+        .hl-card-step .label {
+            font-size: 8px; font-weight: 700; color: #8E8E93;
+            letter-spacing: 0.5px; text-transform: uppercase;
+        }
+        .hl-row {
+            display: flex; align-items: center; justify-content: space-between;
+            font-size: 11px; color: #1C1C1E;
+        }
+        .hl-row .val { font-weight: 600; color: var(--green); font-size: 11px; }
+        .hl-result-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 5px; margin-top: 6px;
+        }
+        .hl-result-chip {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 6px 2px;
+            border-radius: 7px;
+            background: #F2F2F7;
+            font-size: 8px; font-weight: 600; color: #8E8E93;
+            gap: 2px;
+        }
+        .hl-result-chip .chip-icon { font-size: 13px; }
+        .hl-result-chip.selected {
+            background: rgba(80,134,96,0.1);
+            border: 1.5px solid var(--green);
+            color: var(--green);
+        }
+        .hl-result-chip.selected-gold {
+            background: rgba(194,160,77,0.12);
+            border: 1.5px solid var(--gold);
+            color: var(--gold-light);
+        }
+
+        /* ─── Badges Section ─── */
+        .badges { padding: 80px 0; }
+        .badge-showcase {
+            display: flex; justify-content: center; gap: 24px; flex-wrap: wrap;
+            margin-top: 40px;
+        }
+        .badge-item {
+            text-align: center; width: 120px;
+            transition: transform 0.3s;
+        }
+        .badge-item:hover { transform: translateY(-8px) scale(1.05); }
+        .badge-circle {
+            width: 80px; height: 80px;
+            border-radius: 50%; margin: 0 auto 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 32px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .badge-positive { background: linear-gradient(135deg, #3a6b4a, #508660); border: 2px solid rgba(194, 160, 77, 0.3); }
+        .badge-negative { background: linear-gradient(135deg, #5C1E1E, #7A2E2E); border: 2px solid rgba(194, 160, 77, 0.3); }
+        .badge-item .name { font-size: 11px; font-weight: 700; color: var(--mauve); }
+        .badge-item .desc { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+
+        /* ─── Download CTA Section ─── */
+        .auth-section { padding: 80px 0; }
+        .auth-container {
+            max-width: 440px; margin: 0 auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px;
+        }
+
+        /* ─── Launch Monitor ─── */
+        .launch-monitor { padding: 100px 0; position: relative; }
+        .launch-monitor::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(180deg, transparent, rgba(194,160,77,0.04) 40%, rgba(80,134,96,0.06) 70%, transparent);
+            pointer-events: none;
+        }
+        .lm-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            align-items: start;
+        }
+        @media (max-width: 768px) {
+            .lm-layout { grid-template-columns: 1fr; }
+        }
+        .lm-text h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(28px, 4vw, 38px);
+            margin-bottom: 14px;
+        }
+        .lm-text h2 em { color: var(--gold); font-style: normal; }
+        .lm-text > p {
+            font-size: 15px; color: var(--text-muted);
+            line-height: 1.7; margin-bottom: 28px;
+        }
+        .lm-features {
+            display: flex; flex-direction: column; gap: 12px;
+        }
+        .lm-feat {
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+        .lm-feat:hover {
+            border-color: rgba(194,160,77,0.3);
+            background: var(--bg-card-hover);
+        }
+        .lm-feat-icon {
+            width: 36px; height: 36px; flex-shrink: 0;
+            border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+            background: var(--gold-glow);
+        }
+        .lm-feat h4 { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+        .lm-feat p { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+        /* ─── Caddie Popup Mock ─── */
+        .caddie-mock {
+            background: var(--bg-card);
+            border: 1px solid rgba(200,173,187,0.2);
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 340px;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(200,173,187,0.08);
+        }
+        .caddie-mock-header {
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        .caddie-mock-icon {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--mauve), #a8889e);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+        }
+        .caddie-mock-header h4 { font-size: 13px; font-weight: 700; }
+        .caddie-mock-header small { font-size: 11px; color: var(--text-dim); }
+        .caddie-rec {
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .caddie-rec:hover { border-color: rgba(200,173,187,0.3); background: var(--bg-card-hover); }
+        .caddie-rec.recommended { border-color: rgba(200,173,187,0.3); background: rgba(200,173,187,0.06); }
+        .caddie-rec-club {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            background: rgba(80,134,96,0.15);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 800; color: var(--green);
+            flex-shrink: 0;
+        }
+        .caddie-rec.recommended .caddie-rec-club {
+            background: linear-gradient(135deg, var(--mauve), #a8889e);
+            color: #1a0f17;
+        }
+        .caddie-rec h5 { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+        .caddie-rec p { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+        .caddie-rec .leave { font-size: 10px; font-weight: 700; color: var(--mauve); margin-top: 4px; display: block; }
+
+        /* ─── Stats Preview ─── */
+        .stats-section { padding: 80px 0; }
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 16px; margin-top: 40px;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px; text-align: center;
+            transition: all 0.3s;
+        }
+        .stat-card:hover { border-color: rgba(200, 173, 187, 0.3); transform: translateY(-2px); }
+        .stat-card .number {
+            font-size: 36px; font-weight: 800; color: var(--mauve);
+            font-variant-numeric: tabular-nums;
+        }
+        .stat-card .label {
+            font-size: 12px; font-weight: 600; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;
+        }
+
+        /* ─── Footer ─── */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 40px 0;
+            margin-top: 40px;
+        }
+        footer .container {
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 16px;
+        }
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+        }
+        .footer-brand img {
+            height: 34px;
+            width: 34px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+        .footer-brand span {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px;
+            color: var(--text-muted);
+        }
+        .hero-logo {
+            margin-bottom: 36px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
+        }
+        .hero-logo img {
+            width: min(520px, 85vw);
+            height: auto;
+            border-radius: 0;
+            object-fit: contain;
+            filter: drop-shadow(0 8px 32px rgba(80, 134, 96, 0.35));
+        }
+        .section-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 40px 0;
+        }
+        .section-divider img {
+            height: 36px;
+            width: 36px;
+            border-radius: 8px;
+            object-fit: cover;
+            opacity: 0.5;
+        }
+        .section-divider::before,
+        .section-divider::after {
+            content: '';
+            flex: 1;
+            max-width: 120px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--mauve), transparent);
+        }
+        .footer-links { display: flex; gap: 24px; }
+        .footer-links a {
+            font-size: 13px; color: var(--text-dim);
+            text-decoration: none; transition: color 0.2s;
+        }
+        .footer-links a:hover { color: var(--mauve); }
+
+        /* ─── Responsive ─── */
+        @media (max-width: 768px) {
+            .nav-links a:not(.nav-cta) { display: none; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .feature-grid { grid-template-columns: 1fr; }
+            .hero { padding: 120px 0 60px; }
+            .auth-container { padding: 28px 20px; }
+        }
+
+        /* ─── Smooth scroll ─── */
+        html { scroll-behavior: smooth; }
+
+        /* ─── Animations ─── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate { animation: fadeUp 0.6s ease forwards; opacity: 0; }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+    </style>
+</head>
+<body>
+
+<div class="glow-orb glow-1"></div>
+<div class="glow-orb glow-2"></div>
+<div class="glow-orb glow-3"></div>
+
+<!-- Nav -->
+<nav>
+    <div class="container">
+        <a href="index.html" class="nav-brand"><img src="images/icon-76.png" alt="HomeCourse Hero"><span class="nav-brand-text">HomeCourse Hero</span></a>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#insights">Deep Stats</a>
+            <a href="badges.html">Badges</a>
+            <a href="https://apps.apple.com/us/app/homecourse-hero/id6761485344" target="_blank" rel="noopener" class="nav-cta">Get the App</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+    <div class="container">
+        <div class="hero-logo animate">
+            <img src="images/logo-website.png" alt="HomeCourse Hero">
+        </div>
+        <div class="hero-badge animate delay-1">Now Live on the App Store</div>
+        <h1 class="animate delay-2">Track Your Game.<br><em>Own Every Hole.</em></h1>
+        <p class="animate delay-3">Log rounds hole-by-hole, build a complete picture of your home course, see exactly where you're losing strokes, and know what to practice next.</p>
+        <div class="hero-actions animate delay-4">
+            <a href="https://apps.apple.com/us/app/homecourse-hero/id6761485344" target="_blank" rel="noopener" class="btn btn-primary">
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.32 2.32-2.11 4.45-3.74 4.25z" fill="currentColor"/></svg>
+                Download for iOS
+            </a>
+            <a href="#features" class="btn btn-secondary">Learn More</a>
+        </div>
+    </div>
+</section>
+
+<!-- Screenshots -->
+<section class="phone-section">
+    <div class="phone-carousel">
+        <div class="animate delay-1">
+            <div class="phone-frame">
+                <img src="images/screenshot-home.png" alt="Round history dashboard">
+            </div>
+            <div class="phone-label">Rounds</div>
+        </div>
+        <div class="animate delay-1">
+            <div class="phone-frame">
+                <img src="images/screenshot-caddie.png" alt="Virtual Caddie club recommendations">
+            </div>
+            <div class="phone-label featured">Virtual Caddie</div>
+        </div>
+        <div class="animate delay-2">
+            <div class="phone-frame featured">
+                <img src="images/screenshot-stats.png" alt="Stats overview with scoring trends">
+            </div>
+            <div class="phone-label featured">Stats Overview</div>
+        </div>
+        <div class="animate delay-3">
+            <div class="phone-frame">
+                <img src="images/screenshot-hole.png" alt="Hole-by-hole deep dive">
+            </div>
+            <div class="phone-label">Hole Deep Dive</div>
+        </div>
+        <div class="animate delay-3">
+            <div class="phone-frame">
+                <img src="images/screenshot-approach.png" alt="Approach by distance stats">
+            </div>
+            <div class="phone-label">Approach Stats</div>
+        </div>
+        <div class="animate delay-4">
+            <div class="phone-frame">
+                <img src="images/screenshot-booze.png" alt="Booze report and drinking stats">
+            </div>
+            <div class="phone-label">Booze Report</div>
+        </div>
+    </div>
+</section>
+
+<!-- Divider -->
+<div class="section-divider"><img src="images/icon-72.png" alt=""></div>
+
+<!-- Features -->
+<section id="features" class="features">
+    <div class="container">
+        <div class="section-label">Features</div>
+        <h2 class="section-title">Everything you need to<br>understand your game</h2>
+        <div class="feature-grid">
+            <a href="feature-logging.html" class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Hole-by-Hole Tracking</h3>
+                <p>Log fairways, greens, putts, clubs, approach distances, bunkers, and penalties for every hole you play.</p>
+                <span style="display:inline-block;margin-top:12px;font-size:12px;font-weight:700;color:var(--mauve);">See how it works →</span>
+            </a>
+            <a href="badges.html" class="feature-card">
+                <div class="feature-icon">🏆</div>
+                <h3>Badge System</h3>
+                <p>Earn badges for achievements and blunders — from "Double Kill" (back-to-back birdies) to "Goblin Mode" (consecutive triple bogeys).</p>
+                <span style="display:inline-block;margin-top:12px;font-size:12px;font-weight:700;color:var(--mauve);">View all 20 badges →</span>
+            </a>
+            <a href="feature-stats.html" class="feature-card feature-card-highlight">
+                <div class="feature-icon" style="background: linear-gradient(135deg, rgba(200,173,187,0.2), rgba(200,173,187,0.08));">📈</div>
+                <h3>Course Intelligence</h3>
+                <p>Per-hole heat maps, tee club performance, approach distance breakdowns, scrambling stats by club — the more you play, the smarter it gets.</p>
+                <span style="display:inline-block;margin-top:12px;font-size:12px;font-weight:700;color:var(--mauve);">See the full breakdown →</span>
+            </a>
+            <a href="feature-clubs.html" class="feature-card">
+                <div class="feature-icon">🏌️</div>
+                <h3>Smart Club Suggestions</h3>
+                <p>Enter your club yardages and the app auto-populates club selections based on distance — saving time on every hole.</p>
+                <span style="display:inline-block;margin-top:12px;font-size:12px;font-weight:700;color:var(--mauve);">Learn more →</span>
+            </a>
+            <a href="feature-clubs.html#booze" class="feature-card">
+                <div class="feature-icon">🍺</div>
+                <h3>Booze Tracking</h3>
+                <p>Log drinks throughout your round and discover how your scoring changes across different levels of "hydration."</p>
+                <span style="display:inline-block;margin-top:12px;font-size:12px;font-weight:700;color:var(--mauve);">Learn more →</span>
+            </a>
+            <a href="#insights" class="feature-card feature-card-highlight">
+                <div class="feature-icon" style="background: linear-gradient(135deg, rgba(200,173,187,0.2), rgba(200,173,187,0.08));">🏌️‍♂️</div>
+                <h3>Tee Club Breakdown</h3>
+                <p>See your scoring average, fairway %, and GIR by tee club on every hole. Know if Driver or 3-Wood actually scores better — backed by your data.</p>
+                <span style="display:inline-block;margin-top:12px;font-size:12px;font-weight:700;color:var(--mauve);">See the breakdown →</span>
+            </a>
+            <a href="feature-friends.html" class="feature-card">
+                <div class="feature-icon">👥</div>
+                <h3>Friends & Comparison</h3>
+                <p>Build your friend list, compare stats side-by-side, and track head-to-head records with full match history per friend.</p>
+                <span style="display:inline-block;margin-top:12px;font-size:12px;font-weight:700;color:var(--mauve);">Learn more →</span>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Hole Logging Showcase -->
+<section class="hole-showcase">
+    <div class="container">
+        <div class="hole-showcase-inner">
+            <div class="hole-showcase-text">
+                <div class="section-label">Hole-by-Hole Logging</div>
+                <h2>Every shot. <em>Every detail.</em></h2>
+                <p>HomeCourse Hero guides you through each hole with a step-by-step flow — tee shot, approach, short game, and putting. No guesswork, no forgetting what happened three holes ago.</p>
+
+                <div class="hl-steps">
+                    <div class="hl-step">
+                        <div class="hl-step-num">1</div>
+                        <div class="hl-step-body">
+                            <h4>Drive or tee shot</h4>
+                            <p>Pick your club and log where it ended up — fairway, rough, bunker, or worse. Par 3s skip straight to green results.</p>
+                        </div>
+                    </div>
+                    <div class="hl-step">
+                        <div class="hl-step-num">2</div>
+                        <div class="hl-step-body">
+                            <h4>Approach distance & club</h4>
+                            <p>Log your yardage and club. HomeCourse Hero auto-suggests based on your bag settings and builds approach stats over time.</p>
+                        </div>
+                    </div>
+                    <div class="hl-step">
+                        <div class="hl-step-num">3</div>
+                        <div class="hl-step-body">
+                            <h4>Approach result</h4>
+                            <p>Where did your approach land? Green, short, long, left, right, or bunker — feeds directly into your GIR and miss patterns.</p>
+                        </div>
+                    </div>
+                    <div class="hl-step">
+                        <div class="hl-step-num">4</div>
+                        <div class="hl-step-body">
+                            <h4>Short game & putting</h4>
+                            <p>If you missed the green: log your chip club. Then record putts, first putt distance, and your total score.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hl-phone-wrap">
+                <div class="hl-phone">
+                    <!-- Nav -->
+                    <div class="hl-nav">
+                        <div style="color:rgba(255,255,255,0.7);font-size:14px;">⋯</div>
+                        <div class="hl-nav-title">
+                            <span>Hole 1 of 18</span>
+                            <small>Gold · Haymaker</small>
+                        </div>
+                        <div class="hl-finish">Finish</div>
+                    </div>
+
+                    <!-- Hole picker -->
+                    <div class="hl-holes">
+                        <div class="hl-hole-cell active"><span style="font-size:7px">1</span><span>4</span></div>
+                        <div class="hl-hole-cell"><span style="font-size:7px">2</span><span>·</span></div>
+                        <div class="hl-hole-cell"><span style="font-size:7px">3</span><span>·</span></div>
+                        <div class="hl-hole-cell"><span style="font-size:7px">4</span><span>·</span></div>
+                        <div class="hl-hole-cell"><span style="font-size:7px">5</span><span>·</span></div>
+                        <div class="hl-hole-cell"><span style="font-size:7px">6</span><span>·</span></div>
+                        <div class="hl-hole-cell"><span style="font-size:7px">7</span><span>·</span></div>
+                        <div class="hl-hole-cell"><span style="font-size:7px">8</span><span>·</span></div>
+                        <div class="hl-hole-cell"><span style="font-size:7px">9</span><span>·</span></div>
+                        <div class="hl-hole-cell"><span style="font-size:7px">10</span><span>·</span></div>
+                    </div>
+
+                    <div class="hl-body">
+                        <!-- Step 1: Drive -->
+                        <div class="hl-card">
+                            <div class="hl-card-step">
+                                <div class="num">1</div>
+                                <div class="label">Drive</div>
+                            </div>
+                            <div class="hl-row" style="margin-bottom:8px;">
+                                <span>Club</span>
+                                <span class="val">Driver ⌵</span>
+                            </div>
+                            <div style="font-size:9px;font-weight:600;color:#8E8E93;margin-bottom:5px;">Where did it end up?</div>
+                            <div class="hl-result-grid">
+                                <div class="hl-result-chip selected"><span class="chip-icon">✓</span>Fairway</div>
+                                <div class="hl-result-chip"><span class="chip-icon">←</span>Rough L</div>
+                                <div class="hl-result-chip"><span class="chip-icon">→</span>Rough R</div>
+                                <div class="hl-result-chip"><span class="chip-icon">🌿</span>Native</div>
+                                <div class="hl-result-chip"><span class="chip-icon">◎</span>Bunker</div>
+                                <div class="hl-result-chip"><span class="chip-icon">⚠</span>Drop</div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Approach Distance -->
+                        <div class="hl-card">
+                            <div class="hl-card-step">
+                                <div class="num">2</div>
+                                <div class="label">Approach Distance</div>
+                            </div>
+                            <div class="hl-row">
+                                <span>Distance</span>
+                                <span class="val">120 yds ⌵</span>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Approach -->
+                        <div class="hl-card">
+                            <div class="hl-card-step">
+                                <div class="num">3</div>
+                                <div class="label">Approach</div>
+                            </div>
+                            <div class="hl-row" style="margin-bottom:8px;">
+                                <span>Club</span>
+                                <span class="val">GW ⌵</span>
+                            </div>
+                            <div style="font-size:9px;font-weight:600;color:#8E8E93;margin-bottom:5px;">Where did it land?</div>
+                            <div class="hl-result-grid">
+                                <div class="hl-result-chip"><span class="chip-icon">⛳</span>Green</div>
+                                <div class="hl-result-chip"><span class="chip-icon">↓</span>Short</div>
+                                <div class="hl-result-chip"><span class="chip-icon">↑</span>Long</div>
+                                <div class="hl-result-chip"><span class="chip-icon">←</span>Left</div>
+                                <div class="hl-result-chip"><span class="chip-icon">→</span>Right</div>
+                                <div class="hl-result-chip selected-gold"><span class="chip-icon">◎</span>Bunker</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Course Intelligence -->
+<section id="insights" class="course-intel">
+    <div class="container">
+        <div class="ci-header">
+            <div class="section-label">Course Intelligence</div>
+            <h2 class="section-title">Know every hole on<br>your home course</h2>
+            <p>Play a course more than once and HomeCourse Hero builds a detailed picture of how you perform on every single hole — which clubs work, where you lose strokes, and exactly what to focus on.</p>
+        </div>
+
+        <div class="ci-layout">
+            <!-- Left: Scorecard heat map mock -->
+            <div class="ci-scorecard">
+                <div class="ci-course-name">Haymaker Golf Course</div>
+                <div class="ci-course-sub">Front 9 · Avg to par per hole · 12 rounds played</div>
+
+                <div class="ci-heatmap">
+                    <div class="ci-hole h-yellow"><span class="h-num">1</span><span class="h-avg">+0.4</span></div>
+                    <div class="ci-hole h-green"><span class="h-num">2</span><span class="h-avg">−0.2</span></div>
+                    <div class="ci-hole h-red"><span class="h-num">3</span><span class="h-avg">+1.3</span></div>
+                    <div class="ci-hole h-yellow"><span class="h-num">4</span><span class="h-avg">+0.5</span></div>
+                    <div class="ci-hole h-green"><span class="h-num">5</span><span class="h-avg">−0.1</span></div>
+                    <div class="ci-hole h-red"><span class="h-num">6</span><span class="h-avg">+1.1</span></div>
+                    <div class="ci-hole h-blue"><span class="h-num">7</span><span class="h-avg">−0.6</span></div>
+                    <div class="ci-hole h-yellow"><span class="h-num">8</span><span class="h-avg">+0.3</span></div>
+                    <div class="ci-hole h-red"><span class="h-num">9</span><span class="h-avg">+1.5</span></div>
+                </div>
+
+                <div class="ci-heatmap-label">
+                    <span><span class="dot" style="background:#6BC4E8;"></span> Birdie machine</span>
+                    <span><span class="dot" style="background:#6FCF70;"></span> Under par</span>
+                    <span><span class="dot" style="background:var(--gold-light);"></span> Around par</span>
+                    <span><span class="dot" style="background:#E87070;"></span> Trouble hole</span>
+                </div>
+
+                <div style="margin-top: 24px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 16px;">
+                    <div class="ci-course-sub" style="margin-bottom: 12px;">Back 9 · Avg to par per hole</div>
+                    <div class="ci-heatmap">
+                        <div class="ci-hole h-yellow"><span class="h-num">10</span><span class="h-avg">+0.6</span></div>
+                        <div class="ci-hole h-green"><span class="h-num">11</span><span class="h-avg">−0.3</span></div>
+                        <div class="ci-hole h-yellow"><span class="h-num">12</span><span class="h-avg">+0.2</span></div>
+                        <div class="ci-hole h-red"><span class="h-num">13</span><span class="h-avg">+1.7</span></div>
+                        <div class="ci-hole h-blue"><span class="h-num">14</span><span class="h-avg">−0.4</span></div>
+                        <div class="ci-hole h-green"><span class="h-num">15</span><span class="h-avg">−0.1</span></div>
+                        <div class="ci-hole h-yellow"><span class="h-num">16</span><span class="h-avg">+0.4</span></div>
+                        <div class="ci-hole h-red"><span class="h-num">17</span><span class="h-avg">+1.2</span></div>
+                        <div class="ci-hole h-green"><span class="h-num">18</span><span class="h-avg">+0.0</span></div>
+                    </div>
+                </div>
+
+                <div class="ci-summary-row">
+                    <div class="ci-summary-pill">
+                        <div class="val">+6.4</div>
+                        <div class="lbl">Avg to Par</div>
+                    </div>
+                    <div class="ci-summary-pill">
+                        <div class="val">56%</div>
+                        <div class="lbl">FWY</div>
+                    </div>
+                    <div class="ci-summary-pill">
+                        <div class="val">42%</div>
+                        <div class="lbl">GIR</div>
+                    </div>
+                    <div class="ci-summary-pill">
+                        <div class="val">31.8</div>
+                        <div class="lbl">Putts</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Insight cards -->
+            <div class="ci-insights">
+                <div class="ci-insight-card">
+                    <div class="ci-insight-icon">🎯</div>
+                    <div>
+                        <h4>Tee Club Performance</h4>
+                        <p>See which driver or iron you hit off the tee on each hole, your fairway hit rate per club, and whether going conservative actually saves strokes.</p>
+                        <span class="ci-insight-tag">Per-hole breakdown</span>
+                    </div>
+                </div>
+                <div class="ci-insight-card">
+                    <div class="ci-insight-icon">📏</div>
+                    <div>
+                        <h4>Approach Distance Insights</h4>
+                        <p>Break down GIR% by approach distance — inside 100, 100–150, 150–200, 200+. Spot exactly where your iron game falls off and which distances you own.</p>
+                        <span class="ci-insight-tag">Distance buckets</span>
+                    </div>
+                </div>
+                <div class="ci-insight-card">
+                    <div class="ci-insight-icon">⛳</div>
+                    <div>
+                        <h4>Scrambling & Short Game</h4>
+                        <p>Track your up-and-down percentage by chip/pitch club. Know whether your 56° saves more strokes than your bump-and-run — backed by your actual data.</p>
+                        <span class="ci-insight-tag">Club-level scramble %</span>
+                    </div>
+                </div>
+                <div class="ci-insight-card">
+                    <div class="ci-insight-icon">🕳️</div>
+                    <div>
+                        <h4>Putting by First-Putt Distance</h4>
+                        <p>Log first putt distance and see your 1-putt vs. 3-putt rates at various ranges. Find out if lag putting or short putts are costing you more.</p>
+                        <span class="ci-insight-tag">Distance-to-hole analysis</span>
+                    </div>
+                </div>
+                <div class="ci-insight-card">
+                    <div class="ci-insight-icon">🔥</div>
+                    <div>
+                        <h4>Trouble Hole Breakdown</h4>
+                        <p>Your worst holes get a full autopsy — where the strokes are bleeding (tee, approach, short game, or putting) so you know exactly what to practice.</p>
+                        <span class="ci-insight-tag">Stroke-source analysis</span>
+                    </div>
+                </div>
+                <div class="ci-insight-card">
+                    <div class="ci-insight-icon">📊</div>
+                    <div>
+                        <h4>Scoring Trends Over Time</h4>
+                        <p>Watch your per-hole averages improve round by round. See which holes are trending up, which are stable, and where recent changes are paying off.</p>
+                        <span class="ci-insight-tag">Round-over-round</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Booze Report -->
+<section id="booze" style="padding: 80px 0;">
+    <div class="container">
+        <div class="section-label">Booze Report</div>
+        <h2 class="section-title">How does drinking<br>affect your game?</h2>
+        <p style="text-align:center; color:var(--text-muted); max-width:580px; margin:0 auto 48px; font-size:15px; line-height:1.7;">
+            Log drinks throughout your round and HomeCourse Hero tracks exactly how your game changes as the beers add up. Filter your entire stats view by sober vs. boozing rounds — or drill into specific drink counts.
+        </p>
+
+        <div class="ci-layout">
+            <div class="ci-insights">
+                <div class="ci-insight-card">
+                    <div class="ci-insight-icon">🍺</div>
+                    <div>
+                        <h4>Sober vs. Boozy Comparison</h4>
+                        <p>Side-by-side avg score, putts, FWY%, and GIR% for sober rounds vs. rounds where you were drinking. No hiding from the truth.</p>
+                        <span class="ci-insight-tag">Head-to-head</span>
+                    </div>
+                </div>
+                <div class="ci-insight-card">
+                    <div class="ci-insight-icon">📈</div>
+                    <div>
+                        <h4>Score as Drinks Flow</h4>
+                        <p>See your avg score-to-par per hole bucketed by cumulative drinks consumed — 0 drinks, 1–2, 3–4, 5–6, 7+. Watch the trend (spoiler: it usually goes up).</p>
+                        <span class="ci-insight-tag">Drink progression</span>
+                    </div>
+                </div>
+                <div class="ci-insight-card">
+                    <div class="ci-insight-icon">🎚️</div>
+                    <div>
+                        <h4>Filter Everything by Drinks</h4>
+                        <p>Tap "Sober", "Boozing", or specific drink-count buckets (1–5, 6–10, 11–15, 15+) and your entire stats view — scoring trends, heat maps, approach data — adjusts instantly.</p>
+                        <span class="ci-insight-tag">Full stats filtering</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ci-scorecard">
+                <div class="ci-course-name" style="display:flex; align-items:center; gap:8px;">🍺 Booze Report</div>
+                <div class="ci-course-sub">12 boozy rounds · 8 sober rounds</div>
+
+                <div style="margin-top:16px;">
+                    <div style="display:flex; justify-content:space-between; padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.06);">
+                        <span style="font-size:13px; font-weight:600; color:var(--text-dim); width:80px;"></span>
+                        <span style="font-size:10px; font-weight:700; color:var(--gold); width:60px; text-align:center;">BOOZY</span>
+                        <span style="font-size:10px; font-weight:700; color:var(--green-light); width:60px; text-align:center;">SOBER</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.06);">
+                        <span style="font-size:13px; font-weight:600; width:80px;">Avg Score</span>
+                        <span style="font-size:13px; font-weight:700; color:var(--gold); width:60px; text-align:center;">87.2</span>
+                        <span style="font-size:13px; font-weight:700; color:var(--green-light); width:60px; text-align:center;">82.4</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.06);">
+                        <span style="font-size:13px; font-weight:600; width:80px;">Avg Putts</span>
+                        <span style="font-size:13px; font-weight:700; color:var(--gold); width:60px; text-align:center;">33.8</span>
+                        <span style="font-size:13px; font-weight:700; color:var(--green-light); width:60px; text-align:center;">31.2</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; padding:10px 12px; border-bottom:1px solid rgba(255,255,255,0.06);">
+                        <span style="font-size:13px; font-weight:600; width:80px;">FWY %</span>
+                        <span style="font-size:13px; font-weight:700; color:var(--gold); width:60px; text-align:center;">48%</span>
+                        <span style="font-size:13px; font-weight:700; color:var(--green-light); width:60px; text-align:center;">62%</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; padding:10px 12px;">
+                        <span style="font-size:13px; font-weight:600; width:80px;">GIR %</span>
+                        <span style="font-size:13px; font-weight:700; color:var(--gold); width:60px; text-align:center;">35%</span>
+                        <span style="font-size:13px; font-weight:700; color:var(--green-light); width:60px; text-align:center;">48%</span>
+                    </div>
+                </div>
+
+                <div style="margin-top:20px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.06);">
+                    <div style="font-size:11px; font-weight:700; color:var(--text-dim); margin-bottom:10px; display:flex; align-items:center; gap:6px;">📈 Score as drinks flow</div>
+                    <div style="display:flex; gap:6px;">
+                        <div style="flex:1; text-align:center; padding:8px 4px; background:rgba(80,134,96,0.12); border-radius:8px;">
+                            <div style="font-size:12px; font-weight:800; color:var(--green-light);">+0.3</div>
+                            <div style="font-size:8px; font-weight:600; color:var(--text-dim); margin-top:2px;">0</div>
+                        </div>
+                        <div style="flex:1; text-align:center; padding:8px 4px; background:rgba(194,160,77,0.1); border-radius:8px;">
+                            <div style="font-size:12px; font-weight:800; color:var(--gold-light);">+0.5</div>
+                            <div style="font-size:8px; font-weight:600; color:var(--text-dim); margin-top:2px;">1–2</div>
+                        </div>
+                        <div style="flex:1; text-align:center; padding:8px 4px; background:rgba(194,160,77,0.18); border-radius:8px;">
+                            <div style="font-size:12px; font-weight:800; color:var(--gold);">+0.8</div>
+                            <div style="font-size:8px; font-weight:600; color:var(--text-dim); margin-top:2px;">3–4</div>
+                        </div>
+                        <div style="flex:1; text-align:center; padding:8px 4px; background:rgba(180,60,60,0.15); border-radius:8px;">
+                            <div style="font-size:12px; font-weight:800; color:#E87070;">+1.2</div>
+                            <div style="font-size:8px; font-weight:600; color:var(--text-dim); margin-top:2px;">5–6</div>
+                        </div>
+                        <div style="flex:1; text-align:center; padding:8px 4px; background:rgba(180,60,60,0.25); border-radius:8px;">
+                            <div style="font-size:12px; font-weight:800; color:#E87070;">+1.8</div>
+                            <div style="font-size:8px; font-weight:600; color:var(--text-dim); margin-top:2px;">7+</div>
+                        </div>
+                    </div>
+                    <div style="font-size:9px; color:var(--text-dim); text-align:center; margin-top:8px;">avg score to par · cumulative drinks consumed</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Hole Deep Dive -->
+<section class="hole-deep-dive" style="padding: 80px 0;">
+    <div class="container">
+        <div class="section-label">Hole Deep Dive</div>
+        <h2 class="section-title">Every hole gets<br>its own autopsy</h2>
+        <p style="text-align:center; color:var(--text-muted); max-width:580px; margin:0 auto 48px; font-size:15px; line-height:1.7;">
+            Tap any hole on your scorecard and drill into a full breakdown — scoring distribution, tee club performance, approach accuracy, scrambling rate, and putting stats. See exactly where strokes are bleeding and what to practice.
+        </p>
+
+        <div class="ci-layout">
+            <div class="ci-scorecard">
+                <div class="ci-course-name">Hole 6 · Par 4 · 420 yds</div>
+                <div class="ci-course-sub">Your avg: 5.3 (+1.3) · 12 rounds played</div>
+
+                <div style="margin-top:16px;">
+                    <div style="font-size:11px; font-weight:700; color:var(--text-dim); margin-bottom:10px;">SCORE DISTRIBUTION</div>
+                    <div style="display:flex; gap:4px; align-items:flex-end; height:80px;">
+                        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;">
+                            <div style="font-size:9px; font-weight:700; color:var(--text-dim);">1x</div>
+                            <div style="width:100%; background:rgba(107,196,232,0.3); border-radius:4px 4px 0 0; height:10px;"></div>
+                            <div style="font-size:8px; font-weight:700; color:#6BC4E8;">3</div>
+                        </div>
+                        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;">
+                            <div style="font-size:9px; font-weight:700; color:var(--text-dim);">3x</div>
+                            <div style="width:100%; background:rgba(111,207,112,0.3); border-radius:4px 4px 0 0; height:28px;"></div>
+                            <div style="font-size:8px; font-weight:700; color:#6FCF70;">4</div>
+                        </div>
+                        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;">
+                            <div style="font-size:9px; font-weight:700; color:var(--text-dim);">5x</div>
+                            <div style="width:100%; background:rgba(194,160,77,0.3); border-radius:4px 4px 0 0; height:48px;"></div>
+                            <div style="font-size:8px; font-weight:700; color:var(--gold-light);">5</div>
+                        </div>
+                        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;">
+                            <div style="font-size:9px; font-weight:700; color:var(--text-dim);">2x</div>
+                            <div style="width:100%; background:rgba(232,112,112,0.3); border-radius:4px 4px 0 0; height:18px;"></div>
+                            <div style="font-size:8px; font-weight:700; color:#E87070;">6</div>
+                        </div>
+                        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:3px;">
+                            <div style="font-size:9px; font-weight:700; color:var(--text-dim);">1x</div>
+                            <div style="width:100%; background:rgba(232,112,112,0.3); border-radius:4px 4px 0 0; height:10px;"></div>
+                            <div style="font-size:8px; font-weight:700; color:#E87070;">7+</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top:20px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.06);">
+                    <div style="font-size:11px; font-weight:700; color:var(--text-dim); margin-bottom:10px;">OFF THE TEE BY CLUB</div>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; background:rgba(255,255,255,0.03); border-radius:8px;">
+                            <span style="font-size:12px; font-weight:700;">Driver</span>
+                            <span style="font-size:10px; color:var(--text-muted);">8x used</span>
+                            <span style="font-size:10px; color:var(--text-muted);">50% FWY</span>
+                            <span style="font-size:12px; font-weight:700; color:#E87070;">5.4 avg</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 10px; background:rgba(200,173,187,0.06); border:1px solid rgba(200,173,187,0.15); border-radius:8px;">
+                            <span style="font-size:12px; font-weight:700; color:var(--mauve);">3 Wood</span>
+                            <span style="font-size:10px; color:var(--text-muted);">4x used</span>
+                            <span style="font-size:10px; color:var(--text-muted);">75% FWY</span>
+                            <span style="font-size:12px; font-weight:700; color:var(--green-light);">4.8 avg</span>
+                        </div>
+                    </div>
+                    <div style="font-size:9px; color:var(--mauve); font-weight:600; margin-top:6px; text-align:right;">3 Wood scores 0.6 strokes better →</div>
+                </div>
+
+                <div class="ci-summary-row">
+                    <div class="ci-summary-pill">
+                        <div class="val">42%</div>
+                        <div class="lbl">GIR</div>
+                    </div>
+                    <div class="ci-summary-pill">
+                        <div class="val">33%</div>
+                        <div class="lbl">Scramble</div>
+                    </div>
+                    <div class="ci-summary-pill">
+                        <div class="val">1.9</div>
+                        <div class="lbl">Avg Putts</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ci-insights">
+                <div class="ci-insight-card">
+                    <div class="ci-insight-icon">🎯</div>
+                    <div>
+                        <h4>Tee Club Showdown</h4>
+                        <p>See which club you actually score better with off the tee — not just which one goes farther. Compare usage, fairway %, and scoring average per club on every hole.</p>
+                        <span class="ci-insight-tag">Driver vs. 3W vs. iron</span>
+                    </div>
+                </div>
+                <div class="ci-insight-card">
+                    <div class="ci-insight-icon">📏</div>
+                    <div>
+                        <h4>Approach by Distance Bucket</h4>
+                        <p>GIR% broken into 10-yard buckets — 100–110, 110–120, 120–130. Find your sweet-spot distances and the ones where your iron game falls apart.</p>
+                        <span class="ci-insight-tag">10-yard resolution</span>
+                    </div>
+                </div>
+                <div class="ci-insight-card">
+                    <div class="ci-insight-icon">🏳️</div>
+                    <div>
+                        <h4>Scoring by Tee Box</h4>
+                        <p>Playing tips vs. whites vs. golds? See your average score on each hole broken down by which tee you played — know exactly which tees suit your game.</p>
+                        <span class="ci-insight-tag">Tee color comparison</span>
+                    </div>
+                </div>
+                <div class="ci-insight-card">
+                    <div class="ci-insight-icon">📊</div>
+                    <div>
+                        <h4>Stroke Source Breakdown</h4>
+                        <p>For every hole, see what's costing you strokes — tee accuracy, approach precision, short game, or putting. Targeted practice starts here.</p>
+                        <span class="ci-insight-tag">Where strokes bleed</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Divider -->
+<div class="section-divider"><img src="images/icon-72.png" alt=""></div>
+
+<!-- Badges Teaser -->
+<section id="badges" class="badges">
+    <div class="container">
+        <div class="section-label">Badge System</div>
+        <h2 class="section-title">20 badges to earn</h2>
+        <p style="text-align:center; color:var(--text-muted); max-width:520px; margin:0 auto; font-size:15px; line-height:1.6;">
+            Every shot counts. Earn badges for your greatest moments — and your worst. They pop up live as you log holes and stay on your profile forever.
+        </p>
+        <div class="badge-showcase">
+            <div class="badge-item">
+                <div class="badge-circle badge-positive">🔥</div>
+                <div class="name">Double Kill</div>
+                <div class="desc">2 birdies in a row</div>
+            </div>
+            <div class="badge-item">
+                <div class="badge-circle badge-positive">🪱</div>
+                <div class="name">Shai-Hulud</div>
+                <div class="desc">Bunker up & down</div>
+            </div>
+            <div class="badge-item">
+                <div class="badge-circle badge-positive">🦅</div>
+                <div class="name">Big Bird</div>
+                <div class="desc">Eagle or better</div>
+            </div>
+            <div class="badge-item">
+                <div class="badge-circle badge-positive">🎯</div>
+                <div class="name">Rippin' Darts</div>
+                <div class="desc">5 GIR in a row</div>
+            </div>
+            <div class="badge-item">
+                <div class="badge-circle badge-negative">🐾</div>
+                <div class="name">Animal Style</div>
+                <div class="desc">Back-to-back doubles</div>
+            </div>
+            <div class="badge-item">
+                <div class="badge-circle badge-negative">🎭</div>
+                <div class="name">Goblin Mode</div>
+                <div class="desc">Back-to-back triples</div>
+            </div>
+        </div>
+        <div style="text-align:center; margin-top:36px;">
+            <a href="badges.html" class="btn btn-secondary" style="border-color:rgba(200,173,187,0.3); color:var(--mauve);">View all 20 badges →</a>
+        </div>
+    </div>
+</section>
+
+<!-- Virtual Caddie -->
+<section id="caddie" class="launch-monitor">
+    <div class="container">
+        <div class="section-label">Virtual Caddie</div>
+        <h2 class="section-title" style="margin-bottom:16px;">Your <em style="background:linear-gradient(135deg, var(--mauve-light), var(--mauve)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;">data-driven caddie</em></h2>
+        <p style="text-align:center; color:var(--text-muted); max-width:580px; margin:0 auto 48px; font-size:15px; line-height:1.7;">
+            Import your launch monitor data, and HomeCourse Hero builds your bag automatically. On the course, the Virtual Caddie recommends the right club for every hole — backed by your real distances and scoring history.
+        </p>
+
+        <div class="lm-layout">
+            <div class="lm-text">
+                <h3 style="font-family:'Playfair Display',serif; font-size:24px; margin-bottom:20px;">How it works</h3>
+                <div class="lm-features">
+                    <div class="lm-feat">
+                        <div class="lm-feat-icon" style="background:var(--mauve-glow);">1</div>
+                        <div>
+                            <h4>Import your distances</h4>
+                            <p>Upload a CSV from Trackman, GCQuad, Mevo+, or any launch monitor. The app recognizes your clubs and stores average carry yardages automatically.</p>
+                        </div>
+                    </div>
+                    <div class="lm-feat">
+                        <div class="lm-feat-icon" style="background:var(--mauve-glow);">2</div>
+                        <div>
+                            <h4>Your bag fills itself</h4>
+                            <p>Driver, 3W, 2i, 7W, irons, wedges — whatever's in your CSV gets added to your bag with real yardages. No manual entry needed.</p>
+                        </div>
+                    </div>
+                    <div class="lm-feat">
+                        <div class="lm-feat-icon" style="background:var(--mauve-glow);">3</div>
+                        <div>
+                            <h4>Caddie recommends on-course</h4>
+                            <p>On each hole, a popup shows 2-3 club options based on your yardages, scoring history, and best approach ranges. Tap to select, or dismiss.</p>
+                        </div>
+                    </div>
+                    <div class="lm-feat">
+                        <div class="lm-feat-icon" style="background:var(--mauve-glow);">4</div>
+                        <div>
+                            <h4>Smarter over time</h4>
+                            <p>The more rounds you log, the better the caddie gets. It learns which clubs you score best with on each hole and which approach distances are your sweet spot.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="caddie-mock">
+                    <div class="caddie-mock-header">
+                        <div class="caddie-mock-icon">🏌️</div>
+                        <div>
+                            <h4>Virtual Caddie</h4>
+                            <small>Hole 7 · Par 4 · 380 yds</small>
+                        </div>
+                    </div>
+                    <div class="caddie-rec recommended">
+                        <div class="caddie-rec-club">3W</div>
+                        <div>
+                            <h5>3 Wood — 245 yds</h5>
+                            <p>Leaves 135 in — you hit 68% of greens from this range. Avg score with 3W here: 4.2</p>
+                            <span class="leave">Best option based on 8 rounds</span>
+                        </div>
+                    </div>
+                    <div class="caddie-rec">
+                        <div class="caddie-rec-club">DR</div>
+                        <div>
+                            <h5>Driver — 275 yds</h5>
+                            <p>Leaves 105 in but 43% fairway rate on this hole. Avg score: 4.5</p>
+                            <span class="leave">Higher risk, shorter approach</span>
+                        </div>
+                    </div>
+                    <div class="caddie-rec">
+                        <div class="caddie-rec-club">2i</div>
+                        <div>
+                            <h5>2 Iron — 220 yds</h5>
+                            <p>Leaves 160 in — safe off the tee. Your GIR from 160: 42%</p>
+                            <span class="leave">Conservative play</span>
+                        </div>
+                    </div>
+                </div>
+                <p style="font-size:11px; color:var(--text-dim); text-align:center; margin-top:14px;">Tap a recommendation to auto-select your club</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Preview -->
+<section id="stats" class="stats-section">
+    <div class="container">
+        <div class="section-label">Analytics</div>
+        <h2 class="section-title">Know your numbers</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="number">62%</div>
+                <div class="label">Fairways Hit</div>
+            </div>
+            <div class="stat-card">
+                <div class="number">48%</div>
+                <div class="label">Greens in Reg</div>
+            </div>
+            <div class="stat-card">
+                <div class="number">31.2</div>
+                <div class="label">Avg Putts</div>
+            </div>
+            <div class="stat-card">
+                <div class="number">84</div>
+                <div class="label">Avg Score</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Divider -->
+<div class="section-divider"><img src="images/icon-72.png" alt=""></div>
+
+<!-- Download CTA -->
+<section id="download" class="auth-section">
+    <div class="container">
+        <div class="section-label">Free on the App Store</div>
+        <h2 class="section-title">Start tracking your game</h2>
+        <div class="auth-container" style="text-align:center;">
+            <img src="images/icon-176.png" alt="HomeCourse Hero App" style="width:88px; height:88px; border-radius:20px; margin-bottom:20px; box-shadow:0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(200,173,187,0.15);">
+            <p style="font-size:16px; color:var(--text-muted); line-height:1.7; margin-bottom:28px;">
+                HomeCourse Hero is free and available now on the App Store. Start logging rounds today — all your data stays on your device, no account needed.
+            </p>
+            <a href="https://apps.apple.com/us/app/homecourse-hero/id6761485344" target="_blank" rel="noopener" class="btn btn-primary" style="display:inline-flex; width:100%; justify-content:center;">
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.32 2.32-2.11 4.45-3.74 4.25z" fill="currentColor"/></svg>
+                Download on the App Store
+            </a>
+            <p style="font-size:12px; color:var(--text-dim); margin-top:20px; line-height:1.6;">
+                By using HomeCourse Hero you agree to our <a href="privacy.html" style="color:var(--gold); text-decoration:none;">Privacy Policy</a>.<br>
+                Your data stays on your device.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer>
+    <div class="container">
+        <a href="index.html" class="footer-brand">
+            <img src="images/icon-76.png" alt="HomeCourse Hero">
+            <span>HomeCourse Hero</span>
+        </a>
+        <div class="footer-links">
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="https://apps.apple.com/us/app/homecourse-hero/id6761485344" target="_blank" rel="noopener">App Store</a>
+            <a href="mailto:support@homecoursehero.com">Contact</a>
+        </div>
+    </div>
+</footer>
+
+<script>
+// ─── Scroll Animations ───
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+        }
+    });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.feature-card, .badge-item, .stat-card, .ci-scorecard, .ci-insight-card, .ci-hole, .hl-phone, .hl-step, .lm-feat, .caddie-mock, .caddie-rec, .hole-deep-dive .ci-scorecard, .hole-deep-dive .ci-insight-card').forEach(el => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(20px)';
+    el.style.transition = 'all 0.5s ease';
+    observer.observe(el);
+});
+</script>
+
+</body>
+</html>

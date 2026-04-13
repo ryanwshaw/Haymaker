@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matches — HomeCourse Hero</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --green: #508660;
+            --green-dark: #3a6b4a;
+            --green-light: #6aaa7a;
+            --mauve: #c8adbb;
+            --mauve-light: #ddc8d4;
+            --mauve-glow: rgba(200, 173, 187, 0.14);
+            --gold: #C2A04D;
+            --gold-light: #D4B96A;
+            --gold-glow: rgba(194, 160, 77, 0.12);
+            --bg: #0d1510;
+            --bg-card: #141e17;
+            --bg-card-hover: #1c2620;
+            --text: #F0F5EE;
+            --text-muted: #90b898;
+            --text-dim: #5a7860;
+            --border: rgba(200, 173, 187, 0.14);
+            --radius: 16px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .glow-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .glow-1 { width: 600px; height: 600px; background: rgba(80, 134, 96, 0.12); top: -200px; left: -200px; }
+        .glow-2 { width: 500px; height: 500px; background: rgba(200, 173, 187, 0.08); top: 35%; right: -200px; }
+        .glow-3 { width: 700px; height: 700px; background: rgba(80, 134, 96, 0.08); bottom: -300px; left: 30%; }
+        .glow-4 { width: 400px; height: 400px; background: rgba(200, 173, 187, 0.06); top: 70%; left: -100px; }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+        /* ─── Nav ─── */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            background: rgba(13, 21, 16, 0.8);
+            border-bottom: 1px solid var(--border);
+        }
+        nav .container {
+            display: flex; align-items: center; justify-content: space-between;
+            height: 64px;
+        }
+        .nav-brand {
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .nav-brand img {
+            height: 38px;
+            width: 38px;
+            display: block;
+            border-radius: 9px;
+            object-fit: cover;
+        }
+        .nav-brand-text {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 17px;
+            color: var(--text);
+            letter-spacing: 0.02em;
+        }
+        
+        .nav-links { display: flex; gap: 32px; align-items: center; }
+        .nav-links a {
+            font-size: 14px; font-weight: 500; color: var(--text-muted);
+            text-decoration: none; transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--text); }
+        .nav-links a.active { color: var(--mauve); }
+        .nav-cta {
+            font-size: 13px !important; font-weight: 600 !important;
+            color: var(--bg) !important;
+            background: var(--mauve);
+            padding: 8px 20px; border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .nav-cta:hover { background: var(--mauve-light); transform: translateY(-1px); }
+
+        /* ─── Hero ─── */
+        .hero {
+            padding: 140px 0 80px;
+            text-align: center;
+        }
+        .section-label {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-size: 11px; font-weight: 700; color: var(--mauve);
+            text-transform: uppercase; letter-spacing: 2.5px;
+            margin-bottom: 20px;
+        }
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(40px, 6.5vw, 68px);
+            font-weight: 900; line-height: 1.05;
+            margin-bottom: 20px;
+        }
+        .hero h1 em {
+            font-style: normal;
+            background: linear-gradient(135deg, var(--mauve), var(--mauve-light));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .hero p {
+            font-size: 18px; color: var(--text-muted);
+            max-width: 560px; margin: 0 auto 40px; line-height: 1.7;
+        }
+        .hero-cta {
+            display: inline-flex; align-items: center; gap: 10px;
+            font-size: 15px; font-weight: 600; padding: 14px 32px;
+            border-radius: 12px; text-decoration: none;
+            background: linear-gradient(135deg, var(--mauve), var(--mauve-light));
+            color: var(--bg); transition: all 0.25s;
+            box-shadow: 0 4px 24px rgba(200, 173, 187, 0.2);
+        }
+        .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(200, 173, 187, 0.3); }
+
+        /* ─── Sections ─── */
+        section { padding: 80px 0; }
+        section h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(28px, 4vw, 42px);
+            font-weight: 900; margin-bottom: 16px;
+        }
+        section > .container > p.section-desc {
+            font-size: 17px; color: var(--text-muted); max-width: 560px;
+            line-height: 1.7; margin-bottom: 48px;
+        }
+        .section-center { text-align: center; }
+        .section-center .section-desc { margin-left: auto; margin-right: auto; }
+
+        /* ─── Match Format Cards ─── */
+        .format-grid {
+            display: flex; flex-direction: column; gap: 40px;
+        }
+        .format-card {
+            display: grid; grid-template-columns: 1fr 1fr;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: border-color 0.3s, transform 0.3s;
+        }
+        .format-card:hover {
+            border-color: rgba(200, 173, 187, 0.28);
+            transform: translateY(-2px);
+        }
+        .format-info {
+            padding: 40px;
+            display: flex; flex-direction: column; justify-content: center;
+        }
+        .format-icon {
+            font-size: 36px; margin-bottom: 16px;
+            width: 64px; height: 64px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(80, 134, 96, 0.12);
+            border-radius: 14px;
+            border: 1px solid rgba(80, 134, 96, 0.2);
+        }
+        .format-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 26px; font-weight: 900;
+            margin-bottom: 6px;
+        }
+        .format-players {
+            font-size: 12px; font-weight: 600; color: var(--mauve);
+            text-transform: uppercase; letter-spacing: 1.5px;
+            margin-bottom: 14px;
+        }
+        .format-desc {
+            font-size: 15px; color: var(--text-muted); line-height: 1.7;
+        }
+        .format-mock {
+            background: rgba(10, 16, 12, 0.6);
+            border-left: 1px solid var(--border);
+            padding: 32px;
+            display: flex; align-items: center; justify-content: center;
+            min-height: 320px;
+        }
+
+        /* ─── Wolf Mock ─── */
+        .wolf-mock { width: 100%; max-width: 300px; }
+        .wolf-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .wolf-hole {
+            font-size: 11px; font-weight: 700; color: var(--mauve);
+            text-transform: uppercase; letter-spacing: 1.5px;
+        }
+        .wolf-status {
+            font-size: 11px; font-weight: 600; color: var(--green-light);
+            background: rgba(80, 134, 96, 0.15);
+            padding: 3px 10px; border-radius: 6px;
+        }
+        .wolf-players {
+            display: flex; flex-direction: column; gap: 8px;
+            margin-bottom: 16px;
+        }
+        .wolf-player {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px;
+            background: rgba(20, 30, 23, 0.8);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            transition: all 0.2s;
+        }
+        .wolf-player.wolf-role {
+            border-color: rgba(194, 160, 77, 0.3);
+            background: rgba(194, 160, 77, 0.06);
+        }
+        .wolf-player.selected {
+            border-color: rgba(80, 134, 96, 0.4);
+            background: rgba(80, 134, 96, 0.08);
+        }
+        .wolf-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 700; color: var(--bg);
+        }
+        .wolf-avatar.a1 { background: var(--gold); }
+        .wolf-avatar.a2 { background: var(--green); }
+        .wolf-avatar.a3 { background: var(--mauve); }
+        .wolf-avatar.a4 { background: var(--text-dim); }
+        .wolf-pname { font-size: 13px; font-weight: 600; flex: 1; }
+        .wolf-badge {
+            font-size: 10px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1px; padding: 2px 8px; border-radius: 4px;
+        }
+        .wolf-badge.wolf-tag { background: rgba(194, 160, 77, 0.15); color: var(--gold); }
+        .wolf-badge.partner-tag { background: rgba(80, 134, 96, 0.15); color: var(--green-light); }
+        .wolf-pick-label {
+            font-size: 11px; color: var(--text-dim);
+            text-align: center; margin-top: 8px;
+        }
+        .wolf-score-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 12px;
+            background: rgba(20, 30, 23, 0.5);
+            border-radius: 8px;
+            margin-top: 12px;
+        }
+        .wolf-team-label { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+        .wolf-team-pts { font-size: 16px; font-weight: 800; color: var(--gold); }
+
+        /* ─── Stroke Play Mock ─── */
+        .stroke-mock { width: 100%; max-width: 280px; }
+        .stroke-title {
+            font-size: 11px; font-weight: 700; color: var(--mauve);
+            text-transform: uppercase; letter-spacing: 1.5px;
+            margin-bottom: 14px;
+        }
+        .stroke-row {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            margin-bottom: 6px;
+            transition: background 0.2s;
+        }
+        .stroke-row:nth-child(2) {
+            background: rgba(80, 134, 96, 0.1);
+            border: 1px solid rgba(80, 134, 96, 0.2);
+        }
+        .stroke-row:not(:nth-child(2)) {
+            background: rgba(20, 30, 23, 0.5);
+            border: 1px solid transparent;
+        }
+        .stroke-pos {
+            font-size: 14px; font-weight: 800; width: 24px; text-align: center;
+        }
+        .stroke-pos.first { color: var(--gold); }
+        .stroke-avatar {
+            width: 30px; height: 30px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: 700; color: var(--bg);
+        }
+        .stroke-name { font-size: 13px; font-weight: 600; flex: 1; }
+        .stroke-score { font-size: 15px; font-weight: 800; }
+        .stroke-score.low { color: var(--green-light); }
+        .stroke-thru { font-size: 11px; color: var(--text-dim); }
+
+        /* ─── Stableford Mock ─── */
+        .stableford-mock { width: 100%; max-width: 300px; }
+        .stableford-title {
+            font-size: 11px; font-weight: 700; color: var(--mauve);
+            text-transform: uppercase; letter-spacing: 1.5px;
+            margin-bottom: 14px;
+        }
+        .stableford-grid {
+            display: grid; grid-template-columns: 1fr auto;
+            gap: 0;
+        }
+        .stableford-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            grid-column: 1 / -1;
+        }
+        .stableford-item:last-child { border-bottom: none; }
+        .stableford-label { font-size: 13px; color: var(--text-muted); }
+        .stableford-pts {
+            font-size: 15px; font-weight: 800;
+            width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 8px;
+        }
+        .pts-0 { background: rgba(200, 60, 60, 0.12); color: #e06060; }
+        .pts-1 { background: rgba(200, 160, 77, 0.12); color: var(--gold); }
+        .pts-2 { background: rgba(80, 134, 96, 0.12); color: var(--text-muted); }
+        .pts-3 { background: rgba(80, 134, 96, 0.2); color: var(--green-light); }
+        .pts-4 { background: rgba(80, 134, 96, 0.3); color: #7dd894; }
+        .pts-5 { background: linear-gradient(135deg, rgba(194, 160, 77, 0.2), rgba(200, 173, 187, 0.2)); color: var(--gold); }
+        .stableford-total {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 14px; margin-top: 10px;
+            background: rgba(80, 134, 96, 0.08);
+            border-radius: 10px;
+            border: 1px solid rgba(80, 134, 96, 0.15);
+        }
+        .stableford-total-label { font-size: 12px; font-weight: 700; color: var(--green-light); text-transform: uppercase; letter-spacing: 1px; }
+        .stableford-total-val { font-size: 20px; font-weight: 800; color: var(--green-light); }
+
+        /* ─── Fourball Mock ─── */
+        .fourball-mock { width: 100%; max-width: 300px; }
+        .fourball-title {
+            font-size: 11px; font-weight: 700; color: var(--mauve);
+            text-transform: uppercase; letter-spacing: 1.5px;
+            margin-bottom: 14px;
+            text-align: center;
+        }
+        .fourball-vs {
+            display: flex; align-items: center; gap: 16px;
+            margin-bottom: 20px;
+        }
+        .fourball-team {
+            flex: 1; text-align: center;
+            padding: 16px 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: rgba(20, 30, 23, 0.6);
+        }
+        .fourball-team.winning {
+            border-color: rgba(80, 134, 96, 0.35);
+            background: rgba(80, 134, 96, 0.06);
+        }
+        .fourball-team-label {
+            font-size: 10px; font-weight: 700; color: var(--text-dim);
+            text-transform: uppercase; letter-spacing: 1.5px;
+            margin-bottom: 10px;
+        }
+        .fourball-avatars {
+            display: flex; justify-content: center; gap: 6px;
+            margin-bottom: 10px;
+        }
+        .fourball-av {
+            width: 28px; height: 28px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 700; color: var(--bg);
+        }
+        .fourball-team-score {
+            font-size: 28px; font-weight: 800;
+        }
+        .fourball-team-score.ahead { color: var(--green-light); }
+        .fourball-team-score.behind { color: var(--text-dim); }
+        .fourball-vs-badge {
+            font-size: 12px; font-weight: 800; color: var(--text-dim);
+            flex-shrink: 0;
+        }
+        .fourball-hole-row {
+            display: grid; grid-template-columns: auto 1fr 1fr;
+            gap: 0; font-size: 12px;
+        }
+        .fourball-hole-row > div {
+            padding: 6px 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        .fourball-hole-header > div {
+            font-weight: 700; color: var(--text-dim);
+            text-transform: uppercase; font-size: 10px; letter-spacing: 1px;
+        }
+        .fourball-won { color: var(--green-light); font-weight: 700; }
+
+        /* ─── Nassau Mock ─── */
+        .nassau-mock { width: 100%; max-width: 300px; }
+        .nassau-title {
+            font-size: 11px; font-weight: 700; color: var(--mauve);
+            text-transform: uppercase; letter-spacing: 1.5px;
+            margin-bottom: 14px;
+        }
+        .nassau-bets {
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .nassau-bet {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 16px;
+            background: rgba(20, 30, 23, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            transition: border-color 0.2s;
+        }
+        .nassau-bet:hover { border-color: rgba(200, 173, 187, 0.25); }
+        .nassau-bet-left { display: flex; flex-direction: column; gap: 2px; }
+        .nassau-bet-name { font-size: 14px; font-weight: 700; }
+        .nassau-bet-range { font-size: 11px; color: var(--text-dim); }
+        .nassau-bet-right { display: flex; align-items: center; gap: 12px; }
+        .nassau-score-you, .nassau-score-them {
+            text-align: center;
+        }
+        .nassau-score-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); margin-bottom: 2px; }
+        .nassau-score-val { font-size: 20px; font-weight: 800; }
+        .nassau-score-val.winning { color: var(--green-light); }
+        .nassau-score-val.losing { color: #e06060; }
+        .nassau-score-val.tied { color: var(--text-muted); }
+        .nassau-divider { width: 1px; height: 28px; background: var(--border); }
+        .nassau-result {
+            font-size: 10px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1px; padding: 3px 8px; border-radius: 4px;
+            margin-top: 6px; display: inline-block;
+        }
+        .nassau-result.win { background: rgba(80, 134, 96, 0.15); color: var(--green-light); }
+        .nassau-result.loss { background: rgba(200, 60, 60, 0.12); color: #e06060; }
+        .nassau-result.tie { background: rgba(200, 173, 187, 0.1); color: var(--text-muted); }
+        .nassau-total {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 16px; margin-top: 12px;
+            background: rgba(80, 134, 96, 0.06);
+            border: 1px solid rgba(80, 134, 96, 0.15);
+            border-radius: 12px;
+        }
+        .nassau-total-label { font-size: 12px; font-weight: 700; color: var(--green-light); text-transform: uppercase; letter-spacing: 1px; }
+
+        /* ─── How It Works ─── */
+        .steps-container {
+            display: flex; gap: 0; align-items: flex-start;
+            position: relative;
+            padding: 20px 0;
+        }
+        .steps-container::before {
+            content: '';
+            position: absolute;
+            top: 62px; left: 42px; right: 42px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--green-dark), var(--mauve), var(--green-dark));
+            opacity: 0.3;
+        }
+        .step {
+            flex: 1; text-align: center;
+            position: relative;
+            padding: 0 12px;
+        }
+        .step-num {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; font-weight: 800;
+            margin: 0 auto 16px;
+            background: var(--bg-card);
+            border: 2px solid var(--green);
+            color: var(--green-light);
+            position: relative;
+            z-index: 2;
+        }
+        .step-icon { font-size: 24px; margin-bottom: 10px; }
+        .step-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+        .step-desc { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+
+        /* ─── Results Mock ─── */
+        .result-card {
+            max-width: 520px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+        .result-header {
+            padding: 24px 28px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .result-match-type {
+            font-size: 11px; font-weight: 700; color: var(--mauve);
+            text-transform: uppercase; letter-spacing: 1.5px;
+        }
+        .result-date { font-size: 12px; color: var(--text-dim); }
+        .result-winner {
+            padding: 24px 28px;
+            display: flex; align-items: center; gap: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .result-winner-avatar {
+            width: 48px; height: 48px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; font-weight: 800; color: var(--bg);
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            box-shadow: 0 0 20px rgba(194, 160, 77, 0.3);
+        }
+        .result-winner-info { flex: 1; }
+        .result-winner-name { font-size: 18px; font-weight: 800; }
+        .result-winner-label {
+            font-size: 11px; font-weight: 700; color: var(--gold);
+            text-transform: uppercase; letter-spacing: 1.5px;
+        }
+        .result-winner-score {
+            font-size: 28px; font-weight: 900;
+            color: var(--green-light);
+        }
+        .result-others {
+            padding: 16px 28px;
+            border-bottom: 1px solid var(--border);
+        }
+        .result-other-row {
+            display: flex; align-items: center; gap: 12px;
+            padding: 8px 0;
+        }
+        .result-other-row + .result-other-row { border-top: 1px solid rgba(200, 173, 187, 0.06); }
+        .result-other-pos {
+            font-size: 13px; font-weight: 700; color: var(--text-dim); width: 20px;
+        }
+        .result-other-av {
+            width: 28px; height: 28px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 700; color: var(--bg);
+        }
+        .result-other-name { font-size: 13px; font-weight: 600; flex: 1; }
+        .result-other-score { font-size: 14px; font-weight: 700; color: var(--text-muted); }
+        .result-stats {
+            padding: 20px 28px;
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+        .result-stat { text-align: center; }
+        .result-stat-val { font-size: 20px; font-weight: 800; color: var(--mauve); }
+        .result-stat-label { font-size: 10px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+        /* ─── Head to Head ─── */
+        .h2h-card {
+            max-width: 520px; margin: 0 auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+        .h2h-header {
+            padding: 24px 28px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+        .h2h-label {
+            font-size: 11px; font-weight: 700; color: var(--mauve);
+            text-transform: uppercase; letter-spacing: 1.5px;
+            margin-bottom: 4px;
+        }
+        .h2h-subtitle { font-size: 13px; color: var(--text-dim); }
+        .h2h-matchup {
+            display: flex; align-items: center; padding: 32px 28px;
+            gap: 20px;
+        }
+        .h2h-player {
+            flex: 1; text-align: center;
+        }
+        .h2h-av {
+            width: 56px; height: 56px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; font-weight: 800; color: var(--bg);
+            margin: 0 auto 10px;
+        }
+        .h2h-av.you { background: linear-gradient(135deg, var(--green), var(--green-light)); box-shadow: 0 0 24px rgba(80, 134, 96, 0.3); }
+        .h2h-av.them { background: linear-gradient(135deg, var(--mauve), var(--mauve-light)); }
+        .h2h-name { font-size: 15px; font-weight: 700; }
+        .h2h-record-wins { font-size: 36px; font-weight: 900; }
+        .h2h-record-wins.green { color: var(--green-light); }
+        .h2h-record-wins.mauve { color: var(--mauve); }
+        .h2h-center {
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            flex-shrink: 0;
+        }
+        .h2h-vs {
+            font-size: 14px; font-weight: 800; color: var(--text-dim);
+        }
+        .h2h-draws { font-size: 11px; color: var(--text-dim); }
+        .h2h-bar-container {
+            padding: 0 28px 20px;
+        }
+        .h2h-bar {
+            height: 8px; border-radius: 4px;
+            overflow: hidden; display: flex;
+            background: rgba(20, 30, 23, 0.8);
+        }
+        .h2h-bar-fill-you {
+            background: linear-gradient(90deg, var(--green), var(--green-light));
+            transition: width 1s ease;
+        }
+        .h2h-bar-fill-draw {
+            background: var(--text-dim);
+            transition: width 1s ease;
+        }
+        .h2h-bar-fill-them {
+            background: linear-gradient(90deg, var(--mauve), var(--mauve-light));
+            transition: width 1s ease;
+        }
+        .h2h-history {
+            padding: 16px 28px 24px;
+            border-top: 1px solid var(--border);
+        }
+        .h2h-history-label {
+            font-size: 10px; font-weight: 700; color: var(--text-dim);
+            text-transform: uppercase; letter-spacing: 1.5px;
+            margin-bottom: 10px;
+        }
+        .h2h-history-row {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 0;
+        }
+        .h2h-history-row + .h2h-history-row { border-top: 1px solid rgba(200, 173, 187, 0.06); }
+        .h2h-history-result {
+            font-size: 10px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1px; padding: 2px 8px; border-radius: 4px;
+            width: 36px; text-align: center;
+        }
+        .h2h-history-result.w { background: rgba(80, 134, 96, 0.15); color: var(--green-light); }
+        .h2h-history-result.l { background: rgba(200, 60, 60, 0.12); color: #e06060; }
+        .h2h-history-format { font-size: 12px; font-weight: 600; flex: 1; }
+        .h2h-history-scores { font-size: 12px; color: var(--text-dim); }
+        .h2h-history-date { font-size: 11px; color: var(--text-dim); }
+
+        /* ─── CTA Banner ─── */
+        .cta-banner {
+            margin: 40px 0 0;
+            padding: 64px 40px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .cta-banner::before {
+            content: '';
+            position: absolute;
+            top: -60%; left: 50%; transform: translateX(-50%);
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(200, 173, 187, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .cta-banner h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(26px, 4vw, 38px);
+            font-weight: 900; margin-bottom: 12px;
+            position: relative;
+        }
+        .cta-banner p {
+            font-size: 16px; color: var(--text-muted); max-width: 440px;
+            margin: 0 auto 28px; line-height: 1.6;
+            position: relative;
+        }
+        .cta-banner .hero-cta { position: relative; }
+
+        /* ─── Footer ─── */
+        footer {
+            padding: 40px 0;
+            border-top: 1px solid var(--border);
+        }
+        footer .container {
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .footer-brand {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px; font-weight: 700; color: var(--text);
+        }
+        .footer-brand span { color: var(--mauve); }
+        .footer-links { display: flex; gap: 24px; }
+        .footer-links a {
+            font-size: 13px; color: var(--text-dim);
+            text-decoration: none; transition: color 0.2s;
+        }
+        .footer-links a:hover { color: var(--text-muted); }
+
+        /* ─── Animations ─── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(194, 160, 77, 0.2); }
+            50% { box-shadow: 0 0 32px rgba(194, 160, 77, 0.4); }
+        }
+        .animate { opacity: 0; transform: translateY(24px); }
+        .animate.visible {
+            animation: fadeUp 0.6s ease forwards;
+        }
+        .animate.d1 { animation-delay: 0.1s; }
+        .animate.d2 { animation-delay: 0.2s; }
+        .animate.d3 { animation-delay: 0.3s; }
+        .animate.d4 { animation-delay: 0.4s; }
+        .animate.d5 { animation-delay: 0.5s; }
+
+        /* ─── Mobile ─── */
+        @media (max-width: 768px) {
+            .nav-links a:not(.nav-cta) { display: none; }
+            .format-card { grid-template-columns: 1fr; }
+            .format-mock {
+                border-left: none;
+                border-top: 1px solid var(--border);
+                min-height: 260px;
+                padding: 24px 20px;
+            }
+            .format-info { padding: 28px 20px; }
+            .steps-container {
+                flex-direction: column; gap: 24px;
+                align-items: center;
+            }
+            .steps-container::before { display: none; }
+            .step { max-width: 280px; }
+            .h2h-matchup { flex-direction: row; padding: 24px 20px; gap: 12px; }
+            .result-stats { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+            .result-header, .result-winner, .result-others, .result-stats {
+                padding-left: 20px; padding-right: 20px;
+            }
+            .cta-banner { padding: 48px 24px; }
+            footer .container { flex-direction: column; gap: 16px; text-align: center; }
+            .hero { padding: 120px 0 60px; }
+            section { padding: 60px 0; }
+        }
+
+        @media (max-width: 480px) {
+            .fourball-vs { flex-direction: column; gap: 12px; }
+            .fourball-vs-badge { order: -1; }
+            .nassau-bet { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .nassau-bet-right { align-self: stretch; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="glow-orb glow-1"></div>
+<div class="glow-orb glow-2"></div>
+<div class="glow-orb glow-3"></div>
+<div class="glow-orb glow-4"></div>
+
+<!-- Nav -->
+<nav><div class="container">
+    <a href="index.html" class="nav-brand"><img src="images/icon-76.png" alt="HomeCourse Hero"><span class="nav-brand-text">HomeCourse Hero</span></a>
+    <div class="nav-links">
+        <a href="index.html#features">Features</a>
+        <a href="index.html#insights">Deep Stats</a>
+        <a href="badges.html">Badges</a>
+        <a href="https://apps.apple.com/us/app/homecourse-hero/id6761485344" target="_blank" rel="noopener" class="nav-cta">Get the App</a>
+    </div>
+</div></nav>
+
+<!-- Hero -->
+<section class="hero">
+    <div class="container">
+        <div class="section-label animate visible">⚔️ Match Play</div>
+        <h1 class="animate visible d1">Settle It on<br>the <em>Course</em></h1>
+        <p class="animate visible d2">Challenge your friends to real match formats — Wolf, Nassau, Stableford, and more. No more napkin math. Every point tracked, every rivalry recorded.</p>
+        <a href="https://apps.apple.com/us/app/homecourse-hero/id6761485344" target="_blank" rel="noopener" class="hero-cta animate visible d3">
+            Start a Match
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+    </div>
+</section>
+
+<!-- Match Formats -->
+<section id="formats">
+    <div class="container">
+        <div class="section-center">
+            <div class="section-label animate">🏌️ Match Formats</div>
+            <h2 class="animate">Five Ways to Compete</h2>
+            <p class="section-desc animate">From classic stroke play to the strategic chaos of Wolf — pick the format that fits your group.</p>
+        </div>
+
+        <div class="format-grid">
+
+            <!-- Wolf -->
+            <div class="format-card animate">
+                <div class="format-info">
+                    <div class="format-icon">🐺</div>
+                    <div class="format-players">4 Players · Rotating Wolf</div>
+                    <div class="format-name">Wolf</div>
+                    <p class="format-desc">Each hole, one player is the Wolf. After seeing tee shots, the Wolf picks a partner — or goes Lone Wolf for double points. Strategy meets bravado.</p>
+                </div>
+                <div class="format-mock">
+                    <div class="wolf-mock">
+                        <div class="wolf-header">
+                            <div class="wolf-hole">Hole 7 · Par 4</div>
+                            <div class="wolf-status">Picking…</div>
+                        </div>
+                        <div class="wolf-players">
+                            <div class="wolf-player wolf-role">
+                                <div class="wolf-avatar a1">M</div>
+                                <div class="wolf-pname">Mike</div>
+                                <div class="wolf-badge wolf-tag">🐺 Wolf</div>
+                            </div>
+                            <div class="wolf-player selected">
+                                <div class="wolf-avatar a2">R</div>
+                                <div class="wolf-pname">Ryan</div>
+                                <div class="wolf-badge partner-tag">Partner</div>
+                            </div>
+                            <div class="wolf-player">
+                                <div class="wolf-avatar a3">J</div>
+                                <div class="wolf-pname">Jake</div>
+                            </div>
+                            <div class="wolf-player">
+                                <div class="wolf-avatar a4">T</div>
+                                <div class="wolf-pname">Tom</div>
+                            </div>
+                        </div>
+                        <div class="wolf-pick-label">Mike picked Ryan after seeing drives</div>
+                        <div class="wolf-score-row">
+                            <div>
+                                <div class="wolf-team-label">Wolf Team</div>
+                            </div>
+                            <div class="wolf-team-pts">+4 pts</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stroke Play -->
+            <div class="format-card animate">
+                <div class="format-info">
+                    <div class="format-icon">⛳</div>
+                    <div class="format-players">2–4 Players · Medal Play</div>
+                    <div class="format-name">Stroke Play</div>
+                    <p class="format-desc">The classic. Every stroke counts. Lowest total score at the end of the round wins. Simple, pure, unforgiving.</p>
+                </div>
+                <div class="format-mock">
+                    <div class="stroke-mock">
+                        <div class="stroke-title">Leaderboard · Thru 14</div>
+                        <div class="stroke-row">
+                            <div class="stroke-pos first">1</div>
+                            <div class="stroke-avatar" style="background: var(--green);">R</div>
+                            <div class="stroke-name">Ryan</div>
+                            <div class="stroke-score low">-2</div>
+                            <div class="stroke-thru">70</div>
+                        </div>
+                        <div class="stroke-row">
+                            <div class="stroke-pos">2</div>
+                            <div class="stroke-avatar" style="background: var(--mauve);">M</div>
+                            <div class="stroke-name">Mike</div>
+                            <div class="stroke-score" style="color: var(--text-muted);">E</div>
+                            <div class="stroke-thru">72</div>
+                        </div>
+                        <div class="stroke-row">
+                            <div class="stroke-pos">3</div>
+                            <div class="stroke-avatar" style="background: var(--gold);">J</div>
+                            <div class="stroke-name">Jake</div>
+                            <div class="stroke-score" style="color: var(--text-dim);">+3</div>
+                            <div class="stroke-thru">75</div>
+                        </div>
+                        <div class="stroke-row">
+                            <div class="stroke-pos">4</div>
+                            <div class="stroke-avatar" style="background: var(--text-dim);">T</div>
+                            <div class="stroke-name">Tom</div>
+                            <div class="stroke-score" style="color: var(--text-dim);">+5</div>
+                            <div class="stroke-thru">77</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stableford -->
+            <div class="format-card animate">
+                <div class="format-info">
+                    <div class="format-icon">🎯</div>
+                    <div class="format-players">2–4 Players · Points System</div>
+                    <div class="format-name">Stableford</div>
+                    <p class="format-desc">Points-based scoring that rewards aggressive play. A blow-up hole won't kill you — just pick up and move on. Most points wins.</p>
+                </div>
+                <div class="format-mock">
+                    <div class="stableford-mock">
+                        <div class="stableford-title">Point Breakdown</div>
+                        <div style="background: rgba(20,30,23,0.5); border: 1px solid var(--border); border-radius: 12px; overflow: hidden;">
+                            <div class="stableford-grid">
+                                <div class="stableford-item">
+                                    <span class="stableford-label">Double Bogey +</span>
+                                    <span class="stableford-pts pts-0">0</span>
+                                </div>
+                                <div class="stableford-item">
+                                    <span class="stableford-label">Bogey</span>
+                                    <span class="stableford-pts pts-1">1</span>
+                                </div>
+                                <div class="stableford-item">
+                                    <span class="stableford-label">Par</span>
+                                    <span class="stableford-pts pts-2">2</span>
+                                </div>
+                                <div class="stableford-item">
+                                    <span class="stableford-label">Birdie</span>
+                                    <span class="stableford-pts pts-3">3</span>
+                                </div>
+                                <div class="stableford-item">
+                                    <span class="stableford-label">Eagle</span>
+                                    <span class="stableford-pts pts-4">4</span>
+                                </div>
+                                <div class="stableford-item">
+                                    <span class="stableford-label">Albatross</span>
+                                    <span class="stableford-pts pts-5">5</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stableford-total">
+                            <span class="stableford-total-label">Ryan's Total</span>
+                            <span class="stableford-total-val">34 pts</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fourball -->
+            <div class="format-card animate">
+                <div class="format-info">
+                    <div class="format-icon">👥</div>
+                    <div class="format-players">4 Players · 2v2 Teams</div>
+                    <div class="format-name">Fourball / 2v2</div>
+                    <p class="format-desc">Best ball of each team counts on every hole. Lean on your partner, cover each other's bad holes, and play fearless golf.</p>
+                </div>
+                <div class="format-mock">
+                    <div class="fourball-mock">
+                        <div class="fourball-title">Team Matchup · Thru 12</div>
+                        <div class="fourball-vs">
+                            <div class="fourball-team winning">
+                                <div class="fourball-team-label">Team 1</div>
+                                <div class="fourball-avatars">
+                                    <div class="fourball-av" style="background: var(--green);">R</div>
+                                    <div class="fourball-av" style="background: var(--gold);">J</div>
+                                </div>
+                                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Ryan & Jake</div>
+                                <div class="fourball-team-score ahead">3 UP</div>
+                            </div>
+                            <div class="fourball-vs-badge">VS</div>
+                            <div class="fourball-team">
+                                <div class="fourball-team-label">Team 2</div>
+                                <div class="fourball-avatars">
+                                    <div class="fourball-av" style="background: var(--mauve);">M</div>
+                                    <div class="fourball-av" style="background: var(--text-dim);">T</div>
+                                </div>
+                                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Mike & Tom</div>
+                                <div class="fourball-team-score behind">3 DN</div>
+                            </div>
+                        </div>
+                        <div style="font-size: 11px; color: var(--text-dim); text-align: center;">Best ball on each hole · 6 holes remaining</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nassau -->
+            <div class="format-card animate">
+                <div class="format-info">
+                    <div class="format-icon">💰</div>
+                    <div class="format-players">2–4 Players · Three Bets</div>
+                    <div class="format-name">Nassau</div>
+                    <p class="format-desc">Three bets in one round — front nine, back nine, and overall. Lose the front? You've still got two chances to come back. The ultimate format for pride.</p>
+                </div>
+                <div class="format-mock">
+                    <div class="nassau-mock">
+                        <div class="nassau-title">Nassau Scorecard</div>
+                        <div class="nassau-bets">
+                            <div class="nassau-bet">
+                                <div class="nassau-bet-left">
+                                    <div class="nassau-bet-name">Front 9</div>
+                                    <div class="nassau-bet-range">Holes 1–9</div>
+                                    <div class="nassau-result win">Won</div>
+                                </div>
+                                <div class="nassau-bet-right">
+                                    <div class="nassau-score-you">
+                                        <div class="nassau-score-label">You</div>
+                                        <div class="nassau-score-val winning">36</div>
+                                    </div>
+                                    <div class="nassau-divider"></div>
+                                    <div class="nassau-score-them">
+                                        <div class="nassau-score-label">Mike</div>
+                                        <div class="nassau-score-val losing">39</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="nassau-bet">
+                                <div class="nassau-bet-left">
+                                    <div class="nassau-bet-name">Back 9</div>
+                                    <div class="nassau-bet-range">Holes 10–18</div>
+                                    <div class="nassau-result loss">Lost</div>
+                                </div>
+                                <div class="nassau-bet-right">
+                                    <div class="nassau-score-you">
+                                        <div class="nassau-score-label">You</div>
+                                        <div class="nassau-score-val losing">40</div>
+                                    </div>
+                                    <div class="nassau-divider"></div>
+                                    <div class="nassau-score-them">
+                                        <div class="nassau-score-label">Mike</div>
+                                        <div class="nassau-score-val winning">37</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="nassau-bet">
+                                <div class="nassau-bet-left">
+                                    <div class="nassau-bet-name">Overall</div>
+                                    <div class="nassau-bet-range">All 18 Holes</div>
+                                    <div class="nassau-result tie">Tied</div>
+                                </div>
+                                <div class="nassau-bet-right">
+                                    <div class="nassau-score-you">
+                                        <div class="nassau-score-label">You</div>
+                                        <div class="nassau-score-val tied">76</div>
+                                    </div>
+                                    <div class="nassau-divider"></div>
+                                    <div class="nassau-score-them">
+                                        <div class="nassau-score-label">Mike</div>
+                                        <div class="nassau-score-val tied">76</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="nassau-total">
+                            <span class="nassau-total-label">Result</span>
+                            <span style="font-size: 14px; font-weight: 700; color: var(--green-light);">1 Win · 1 Loss · 1 Tie</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How Matches Work -->
+<section>
+    <div class="container">
+        <div class="section-center">
+            <div class="section-label animate">📋 How It Works</div>
+            <h2 class="animate">From Tee Box to Trophy</h2>
+            <p class="section-desc animate">Setting up a match takes seconds. The app handles the rest — scoring, rules, results, all of it.</p>
+        </div>
+
+        <div class="steps-container animate">
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-icon">📝</div>
+                <div class="step-title">Create Match</div>
+                <div class="step-desc">Pick your format and set up the round</div>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-icon">👥</div>
+                <div class="step-title">Add Friends</div>
+                <div class="step-desc">Invite your group or share a join code</div>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-icon">⛳</div>
+                <div class="step-title">Play Your Round</div>
+                <div class="step-desc">Enter scores hole by hole as you go</div>
+            </div>
+            <div class="step">
+                <div class="step-num">4</div>
+                <div class="step-icon">📊</div>
+                <div class="step-title">Live Scoring</div>
+                <div class="step-desc">Points and standings update in real time</div>
+            </div>
+            <div class="step">
+                <div class="step-num">5</div>
+                <div class="step-icon">🏆</div>
+                <div class="step-title">Results</div>
+                <div class="step-desc">Winner crowned, stats locked in forever</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Match Results -->
+<section>
+    <div class="container">
+        <div class="section-center">
+            <div class="section-label animate">🏆 Match Results</div>
+            <h2 class="animate">Every Win Recorded</h2>
+            <p class="section-desc animate">Completed matches live in your history with full stats. No more "I think I won last time."</p>
+        </div>
+
+        <div class="result-card animate">
+            <div class="result-header">
+                <div class="result-match-type">Stroke Play · 18 Holes</div>
+                <div class="result-date">Mar 22, 2026</div>
+            </div>
+            <div class="result-winner">
+                <div class="result-winner-avatar" style="animation: pulseGlow 3s ease infinite;">R</div>
+                <div class="result-winner-info">
+                    <div class="result-winner-label">🏆 Winner</div>
+                    <div class="result-winner-name">Ryan</div>
+                </div>
+                <div class="result-winner-score">72</div>
+            </div>
+            <div class="result-others">
+                <div class="result-other-row">
+                    <div class="result-other-pos">2</div>
+                    <div class="result-other-av" style="background: var(--mauve);">M</div>
+                    <div class="result-other-name">Mike</div>
+                    <div class="result-other-score">75</div>
+                </div>
+                <div class="result-other-row">
+                    <div class="result-other-pos">3</div>
+                    <div class="result-other-av" style="background: var(--gold);">J</div>
+                    <div class="result-other-name">Jake</div>
+                    <div class="result-other-score">78</div>
+                </div>
+                <div class="result-other-row">
+                    <div class="result-other-pos">4</div>
+                    <div class="result-other-av" style="background: var(--text-dim);">T</div>
+                    <div class="result-other-name">Tom</div>
+                    <div class="result-other-score">82</div>
+                </div>
+            </div>
+            <div class="result-stats">
+                <div class="result-stat">
+                    <div class="result-stat-val">4</div>
+                    <div class="result-stat-label">Birdies</div>
+                </div>
+                <div class="result-stat">
+                    <div class="result-stat-val">67%</div>
+                    <div class="result-stat-label">FIR</div>
+                </div>
+                <div class="result-stat">
+                    <div class="result-stat-val">31</div>
+                    <div class="result-stat-label">Putts</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Head to Head -->
+<section>
+    <div class="container">
+        <div class="section-center">
+            <div class="section-label animate">🔥 Rivalries</div>
+            <h2 class="animate">Track Your Rivalry</h2>
+            <p class="section-desc animate">Every match against a friend builds your all-time head-to-head record. Who really owns the bragging rights?</p>
+        </div>
+
+        <div class="h2h-card animate">
+            <div class="h2h-header">
+                <div class="h2h-label">Head-to-Head Record</div>
+                <div class="h2h-subtitle">All-time across all formats</div>
+            </div>
+            <div class="h2h-matchup">
+                <div class="h2h-player">
+                    <div class="h2h-av you">R</div>
+                    <div class="h2h-name">Ryan</div>
+                    <div class="h2h-record-wins green">7</div>
+                </div>
+                <div class="h2h-center">
+                    <div class="h2h-vs">VS</div>
+                    <div class="h2h-draws">2 draws</div>
+                </div>
+                <div class="h2h-player">
+                    <div class="h2h-av them">M</div>
+                    <div class="h2h-name">Mike</div>
+                    <div class="h2h-record-wins mauve">4</div>
+                </div>
+            </div>
+            <div class="h2h-bar-container">
+                <div class="h2h-bar">
+                    <div class="h2h-bar-fill-you" style="width: 54%;"></div>
+                    <div class="h2h-bar-fill-draw" style="width: 15%;"></div>
+                    <div class="h2h-bar-fill-them" style="width: 31%;"></div>
+                </div>
+            </div>
+            <div class="h2h-history">
+                <div class="h2h-history-label">Recent Matches</div>
+                <div class="h2h-history-row">
+                    <div class="h2h-history-result w">W</div>
+                    <div class="h2h-history-format">Stroke Play</div>
+                    <div class="h2h-history-scores">72 – 75</div>
+                    <div class="h2h-history-date">Mar 22</div>
+                </div>
+                <div class="h2h-history-row">
+                    <div class="h2h-history-result l">L</div>
+                    <div class="h2h-history-format">Nassau</div>
+                    <div class="h2h-history-scores">1–2 bets</div>
+                    <div class="h2h-history-date">Mar 15</div>
+                </div>
+                <div class="h2h-history-row">
+                    <div class="h2h-history-result w">W</div>
+                    <div class="h2h-history-format">Wolf</div>
+                    <div class="h2h-history-scores">+8 pts</div>
+                    <div class="h2h-history-date">Mar 8</div>
+                </div>
+                <div class="h2h-history-row">
+                    <div class="h2h-history-result w">W</div>
+                    <div class="h2h-history-format">Stableford</div>
+                    <div class="h2h-history-scores">36 – 31</div>
+                    <div class="h2h-history-date">Feb 28</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section>
+    <div class="container">
+        <div class="cta-banner animate">
+            <div class="section-label" style="margin-bottom: 16px;">Ready to Play?</div>
+            <h2>Start Your First Match</h2>
+            <p>Download HomeCourse Hero, pick a format, and find out who's really the best in your group.</p>
+            <a href="https://apps.apple.com/us/app/homecourse-hero/id6761485344" target="_blank" rel="noopener" class="hero-cta">
+                Download Free
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer><div class="container">
+    <div class="footer-brand">HomeCourse <span>Hero</span></div>
+    <div class="footer-links">
+        <a href="privacy.html">Privacy</a>
+        <a href="https://apps.apple.com/us/app/homecourse-hero/id6761485344" target="_blank">App Store</a>
+        <a href="mailto:support@homecoursehero.com">Contact</a>
+    </div>
+</div></footer>
+
+<script>
+(function() {
+    var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.animate').forEach(function(el) {
+        if (!el.classList.contains('visible')) {
+            observer.observe(el);
+        }
+    });
+})();
+</script>
+
+</body>
+</html>

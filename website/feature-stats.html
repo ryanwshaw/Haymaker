@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stats & Course Intelligence — HomeCourse Hero</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --green: #508660;
+            --green-dark: #3a6b4a;
+            --green-light: #6aaa7a;
+            --mauve: #c8adbb;
+            --mauve-light: #ddc8d4;
+            --mauve-glow: rgba(200, 173, 187, 0.14);
+            --gold: #C2A04D;
+            --gold-light: #D4B96A;
+            --bg: #0d1510;
+            --bg-card: #141e17;
+            --bg-card-hover: #1a2a1e;
+            --text: #F0F5EE;
+            --text-muted: #90b898;
+            --text-dim: #5a7860;
+            --border: rgba(200, 173, 187, 0.14);
+            --radius: 16px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg); color: var(--text);
+            overflow-x: hidden; -webkit-font-smoothing: antialiased;
+        }
+        .glow-orb { position: fixed; border-radius: 50%; filter: blur(120px); pointer-events: none; z-index: 0; }
+        .glow-1 { width: 600px; height: 600px; background: rgba(80, 134, 96, 0.15); top: -200px; left: -200px; }
+        .glow-2 { width: 500px; height: 500px; background: rgba(200, 173, 187, 0.1); top: 40%; right: -200px; }
+        .glow-3 { width: 700px; height: 700px; background: rgba(80, 134, 96, 0.1); bottom: -300px; left: 30%; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            background: rgba(13, 21, 16, 0.8); border-bottom: 1px solid var(--border);
+        }
+        nav .container { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+        .nav-brand {
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .nav-brand img {
+            height: 38px;
+            width: 38px;
+            display: block;
+            border-radius: 9px;
+            object-fit: cover;
+        }
+        .nav-brand-text {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 17px;
+            color: var(--text);
+            letter-spacing: 0.02em;
+        }
+        
+        .nav-links { display: flex; gap: 32px; align-items: center; }
+        .nav-links a { font-size: 14px; font-weight: 500; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+        .nav-links a:hover { color: var(--text); }
+        .nav-cta { font-size: 13px !important; font-weight: 600 !important; color: var(--bg) !important; background: var(--mauve); padding: 8px 20px; border-radius: 8px; transition: all 0.2s; }
+        .nav-cta:hover { background: var(--mauve-light); transform: translateY(-1px); }
+
+        .hero { padding: 140px 0 60px; text-align: center; }
+        .section-label { font-size: 12px; font-weight: 700; color: var(--mauve); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px; }
+        .hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(36px, 6vw, 64px); font-weight: 900; line-height: 1.08; margin-bottom: 20px; }
+        .hero h1 span { color: var(--mauve); }
+        .hero p { font-size: 18px; color: var(--text-muted); max-width: 600px; margin: 0 auto; line-height: 1.7; }
+
+        .section-title { font-family: 'Playfair Display', serif; font-size: clamp(24px, 3.5vw, 36px); margin-bottom: 12px; }
+        .section-title span { color: var(--mauve); }
+
+        /* Stat Sections */
+        .stat-section { padding: 60px 0; }
+        .stat-section + .stat-section { border-top: 1px solid rgba(200,173,187,0.06); }
+        .stat-header { margin-bottom: 32px; }
+        .stat-header p { font-size: 15px; color: var(--text-muted); line-height: 1.7; max-width: 600px; }
+        .stat-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; }
+        .stat-layout.full { grid-template-columns: 1fr; }
+
+        /* Heatmap */
+        .heatmap-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 20px; padding: 28px; overflow: hidden;
+        }
+        .heatmap-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+        .heatmap-sub { font-size: 11px; color: var(--text-dim); margin-bottom: 20px; }
+        .heatmap-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px; margin-bottom: 16px; }
+        .hm-hole { text-align: center; border-radius: 10px; padding: 8px 0; transition: transform 0.2s; }
+        .hm-hole:hover { transform: scale(1.1); }
+        .hm-hole .num { font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.5); display: block; margin-bottom: 2px; }
+        .hm-hole .avg { font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .hm-hole .par { font-size: 9px; color: rgba(255,255,255,0.35); display: block; margin-top: 1px; }
+        .hm-green { background: rgba(34,86,36,0.5); }
+        .hm-green .avg { color: #6FCF70; }
+        .hm-yellow { background: rgba(194,160,77,0.18); }
+        .hm-yellow .avg { color: var(--gold-light); }
+        .hm-red { background: rgba(180,60,60,0.25); }
+        .hm-red .avg { color: #E87070; }
+        .hm-legend { display: flex; justify-content: center; gap: 20px; }
+        .hm-legend span { display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 600; color: var(--text-dim); }
+        .hm-legend .dot { width: 10px; height: 10px; border-radius: 50%; }
+
+        /* Tee Club Table */
+        .data-table {
+            width: 100%; border-collapse: separate; border-spacing: 0;
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
+        }
+        .data-table th {
+            font-size: 10px; font-weight: 700; color: var(--text-dim);
+            text-transform: uppercase; letter-spacing: 0.5px;
+            text-align: left; padding: 14px 16px;
+            background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border);
+        }
+        .data-table td {
+            font-size: 13px; padding: 12px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+        .fw-bar { display: flex; align-items: center; gap: 10px; }
+        .fw-bar-track { flex: 1; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+        .fw-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+        .fw-bar-fill.good { background: var(--green); }
+        .fw-bar-fill.ok { background: var(--gold); }
+        .fw-bar-fill.poor { background: #E87070; }
+        .fw-pct { font-size: 13px; font-weight: 700; min-width: 40px; text-align: right; font-variant-numeric: tabular-nums; }
+
+        /* GIR Bars */
+        .gir-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 24px;
+        }
+        .gir-card-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+        .gir-card-sub { font-size: 11px; color: var(--text-dim); margin-bottom: 20px; }
+        .gir-row { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+        .gir-row:last-child { margin-bottom: 0; }
+        .gir-label { font-size: 12px; font-weight: 600; color: var(--text-muted); min-width: 90px; }
+        .gir-bar-track { flex: 1; height: 28px; background: rgba(255,255,255,0.04); border-radius: 8px; overflow: hidden; position: relative; }
+        .gir-bar-fill {
+            height: 100%; border-radius: 8px; display: flex; align-items: center; padding-left: 12px;
+            font-size: 13px; font-weight: 800; color: var(--bg); transition: width 0.6s ease;
+        }
+        .gir-fill-green { background: linear-gradient(90deg, var(--green), var(--green-light)); }
+        .gir-fill-gold { background: linear-gradient(90deg, var(--gold), var(--gold-light)); }
+        .gir-fill-mauve { background: linear-gradient(90deg, #a8889e, var(--mauve)); }
+
+        /* Approach Distance per Hole */
+        .approach-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 24px;
+        }
+        .approach-card-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+        .approach-card-sub { font-size: 11px; color: var(--text-dim); margin-bottom: 20px; }
+        .approach-holes { display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px; }
+        .approach-hole { text-align: center; }
+        .approach-hole .a-num { font-size: 9px; font-weight: 700; color: var(--text-dim); display: block; margin-bottom: 4px; }
+        .approach-bar-wrap { height: 120px; display: flex; align-items: flex-end; justify-content: center; }
+        .approach-bar {
+            width: 20px; border-radius: 6px 6px 0 0;
+            background: linear-gradient(180deg, var(--mauve), rgba(200,173,187,0.3));
+            transition: height 0.5s ease;
+        }
+        .approach-yds { font-size: 10px; font-weight: 700; color: var(--mauve); margin-top: 4px; }
+
+        /* Club around green */
+        .wedge-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 24px;
+        }
+        .wedge-row {
+            display: flex; align-items: center; gap: 14px; padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .wedge-row:last-child { border-bottom: none; }
+        .wedge-name { font-size: 13px; font-weight: 700; min-width: 80px; }
+        .wedge-uses { font-size: 11px; color: var(--text-dim); min-width: 60px; }
+        .wedge-bar-track { flex: 1; height: 8px; background: rgba(255,255,255,0.04); border-radius: 4px; overflow: hidden; }
+        .wedge-bar-fill { height: 100%; border-radius: 4px; background: var(--green); }
+        .wedge-pct { font-size: 13px; font-weight: 800; color: var(--green-light); min-width: 50px; text-align: right; }
+
+        /* Scoring Trend */
+        .chart-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 28px;
+        }
+        .chart-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+        .chart-sub { font-size: 11px; color: var(--text-dim); margin-bottom: 24px; }
+        .line-chart { position: relative; height: 200px; display: flex; align-items: flex-end; gap: 0; }
+        .chart-y-axis {
+            position: absolute; left: 0; top: 0; bottom: 0; width: 36px;
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .chart-y-label { font-size: 9px; font-weight: 600; color: var(--text-dim); text-align: right; }
+        .chart-area { margin-left: 44px; flex: 1; position: relative; height: 100%; }
+        .chart-gridline {
+            position: absolute; left: 0; right: 0; height: 1px;
+            background: rgba(255,255,255,0.04);
+        }
+        .chart-points { position: absolute; inset: 0; }
+        .chart-point {
+            position: absolute; width: 10px; height: 10px;
+            background: var(--mauve); border-radius: 50%;
+            border: 2px solid var(--bg-card); transform: translate(-50%, 50%);
+            z-index: 2;
+        }
+        .chart-line-seg {
+            position: absolute; height: 2px; background: rgba(200,173,187,0.4);
+            transform-origin: left center; z-index: 1;
+        }
+        .chart-x-labels { display: flex; justify-content: space-between; margin-top: 10px; margin-left: 44px; }
+        .chart-x-label { font-size: 9px; color: var(--text-dim); font-weight: 600; }
+        .trend-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: rgba(34,86,36,0.3); color: #6FCF70;
+            font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 6px;
+            margin-top: 16px;
+        }
+
+        /* Putting stats */
+        .putt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+        .putt-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 24px; text-align: center;
+        }
+        .putt-val { font-size: 32px; font-weight: 900; color: var(--mauve); font-variant-numeric: tabular-nums; }
+        .putt-label { font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+        .putt-desc { font-size: 11px; color: var(--text-muted); margin-top: 8px; line-height: 1.5; }
+
+        /* Emphasis Banner */
+        .emphasis-section { padding: 60px 0; text-align: center; }
+        .emphasis-card {
+            background: linear-gradient(135deg, var(--bg-card), rgba(200,173,187,0.06));
+            border: 1px solid rgba(200,173,187,0.2); border-radius: 24px;
+            padding: 48px 40px; max-width: 700px; margin: 0 auto;
+        }
+        .emphasis-card h2 { font-family: 'Playfair Display', serif; font-size: clamp(22px, 3vw, 32px); margin-bottom: 12px; line-height: 1.3; }
+        .emphasis-card h2 span { color: var(--mauve); }
+        .emphasis-card p { font-size: 15px; color: var(--text-muted); line-height: 1.7; }
+        .round-dots { display: flex; justify-content: center; gap: 8px; margin-top: 24px; }
+        .round-dot { width: 12px; height: 12px; border-radius: 50%; background: rgba(255,255,255,0.08); transition: all 0.3s; }
+        .round-dot.filled { background: var(--mauve); box-shadow: 0 0 12px rgba(200,173,187,0.3); }
+        .round-dot.partial { background: rgba(200,173,187,0.4); }
+
+        /* CTA */
+        .cta-section { padding: 80px 0; text-align: center; }
+        .cta-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 24px; padding: 56px 40px; max-width: 600px; margin: 0 auto;
+        }
+        .cta-card h2 { font-family: 'Playfair Display', serif; font-size: clamp(24px, 3.5vw, 36px); margin-bottom: 12px; }
+        .cta-card p { font-size: 15px; color: var(--text-muted); line-height: 1.7; margin-bottom: 28px; }
+        .btn-cta {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-size: 15px; font-weight: 700; padding: 14px 32px;
+            border-radius: 12px; text-decoration: none;
+            background: linear-gradient(135deg, #c8adbb, #a8889e);
+            color: var(--bg); transition: all 0.25s; border: none; cursor: pointer;
+            box-shadow: 0 4px 24px rgba(200,173,187,0.2);
+        }
+        .btn-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(200,173,187,0.3); }
+
+        footer {
+            border-top: 1px solid var(--border); padding: 32px 0;
+        }
+        footer .container { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+        .footer-brand { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: var(--text); }
+        .footer-brand span { color: var(--mauve); }
+        .footer-links { display: flex; gap: 24px; }
+        .footer-links a { font-size: 13px; color: var(--text-dim); text-decoration: none; transition: color 0.2s; }
+        .footer-links a:hover { color: var(--text-muted); }
+
+        .fade-up { opacity: 0; transform: translateY(24px); transition: all 0.6s ease; }
+        .fade-up.visible { opacity: 1; transform: translateY(0); }
+
+        @media (max-width: 768px) {
+            .stat-layout { grid-template-columns: 1fr; }
+            .heatmap-grid, .approach-holes { grid-template-columns: repeat(9, 1fr); gap: 3px; }
+            .putt-grid { grid-template-columns: 1fr; }
+            .nav-links { gap: 16px; }
+            .nav-links a:not(.nav-cta) { display: none; }
+            .emphasis-card, .cta-card { padding: 32px 20px; }
+            footer .container { justify-content: center; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="glow-orb glow-1"></div>
+<div class="glow-orb glow-2"></div>
+<div class="glow-orb glow-3"></div>
+
+<nav>
+    <div class="container">
+        <a href="index.html" class="nav-brand"><img src="images/icon-76.png" alt="HomeCourse Hero"><span class="nav-brand-text">HomeCourse Hero</span></a>
+        <div class="nav-links">
+            <a href="index.html#features">Features</a>
+            <a href="index.html#insights">Deep Stats</a>
+            <a href="badges.html">Badges</a>
+            <a href="https://apps.apple.com/us/app/homecourse-hero/id6761485344" target="_blank" rel="noopener" class="nav-cta">Get the App</a>
+        </div>
+    </div>
+</nav>
+
+<section class="hero">
+    <div class="container">
+        <div class="section-label">Stats & Course Intelligence</div>
+        <h1 class="fade-up">Know Every Hole<br>on Your <span>Course</span></h1>
+        <p class="fade-up">Play your home course 3, 5, 10 times — and these stats paint a complete picture of your game. Every round makes your data smarter.</p>
+    </div>
+</section>
+
+<!-- 1. Per-Hole Heat Map -->
+<section class="stat-section">
+    <div class="container">
+        <div class="stat-layout">
+            <div>
+                <div class="stat-header">
+                    <div class="section-label">Scoring</div>
+                    <h2 class="section-title">Per-Hole <span>Heat Map</span></h2>
+                    <p>See which holes eat your lunch — and which ones you dominate. Color-coded by your average score vs par across all rounds.</p>
+                </div>
+            </div>
+            <div class="heatmap-card fade-up">
+                <div class="heatmap-title">Pinecrest Golf Club</div>
+                <div class="heatmap-sub">18 holes · 8 rounds logged</div>
+                <div style="font-size:10px; font-weight:700; color:var(--text-dim); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Front 9</div>
+                <div class="heatmap-grid">
+                    <div class="hm-hole hm-green"><span class="num">1</span><span class="avg">3.8</span><span class="par">P4</span></div>
+                    <div class="hm-hole hm-yellow"><span class="num">2</span><span class="avg">3.1</span><span class="par">P3</span></div>
+                    <div class="hm-hole hm-red"><span class="num">3</span><span class="avg">6.2</span><span class="par">P5</span></div>
+                    <div class="hm-hole hm-green"><span class="num">4</span><span class="avg">3.9</span><span class="par">P4</span></div>
+                    <div class="hm-hole hm-yellow"><span class="num">5</span><span class="avg">4.1</span><span class="par">P4</span></div>
+                    <div class="hm-hole hm-green"><span class="num">6</span><span class="avg">2.9</span><span class="par">P3</span></div>
+                    <div class="hm-hole hm-red"><span class="num">7</span><span class="avg">5.8</span><span class="par">P4</span></div>
+                    <div class="hm-hole hm-yellow"><span class="num">8</span><span class="avg">5.1</span><span class="par">P5</span></div>
+                    <div class="hm-hole hm-green"><span class="num">9</span><span class="avg">4.0</span><span class="par">P4</span></div>
+                </div>
+                <div style="font-size:10px; font-weight:700; color:var(--text-dim); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Back 9</div>
+                <div class="heatmap-grid">
+                    <div class="hm-hole hm-yellow"><span class="num">10</span><span class="avg">4.3</span><span class="par">P4</span></div>
+                    <div class="hm-hole hm-green"><span class="num">11</span><span class="avg">2.8</span><span class="par">P3</span></div>
+                    <div class="hm-hole hm-red"><span class="num">12</span><span class="avg">5.5</span><span class="par">P4</span></div>
+                    <div class="hm-hole hm-yellow"><span class="num">13</span><span class="avg">5.2</span><span class="par">P5</span></div>
+                    <div class="hm-hole hm-green"><span class="num">14</span><span class="avg">3.9</span><span class="par">P4</span></div>
+                    <div class="hm-hole hm-yellow"><span class="num">15</span><span class="avg">4.2</span><span class="par">P4</span></div>
+                    <div class="hm-hole hm-green"><span class="num">16</span><span class="avg">2.8</span><span class="par">P3</span></div>
+                    <div class="hm-hole hm-red"><span class="num">17</span><span class="avg">5.9</span><span class="par">P4</span></div>
+                    <div class="hm-hole hm-yellow"><span class="num">18</span><span class="avg">5.3</span><span class="par">P5</span></div>
+                </div>
+                <div class="hm-legend" style="margin-top:16px;">
+                    <span><span class="dot" style="background:#6FCF70;"></span> Under par</span>
+                    <span><span class="dot" style="background:var(--gold-light);"></span> Around par</span>
+                    <span><span class="dot" style="background:#E87070;"></span> Trouble holes</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 2. Tee Club by Hole -->
+<section class="stat-section">
+    <div class="container">
+        <div class="stat-header">
+            <div class="section-label">Off the Tee</div>
+            <h2 class="section-title">Tee Club <span>by Hole</span></h2>
+            <p>Which club do you hit off the tee on each hole? See your fairway hit % per club — and figure out where playing safe pays off.</p>
+        </div>
+        <div class="fade-up" style="overflow-x:auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Hole</th>
+                        <th>Par</th>
+                        <th>Most Used Club</th>
+                        <th>Times Hit</th>
+                        <th>Fairway %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="font-weight:700;">1</td>
+                        <td>4</td>
+                        <td style="color:var(--mauve); font-weight:600;">Driver</td>
+                        <td>7/8</td>
+                        <td>
+                            <div class="fw-bar">
+                                <div class="fw-bar-track"><div class="fw-bar-fill good" style="width:71%"></div></div>
+                                <span class="fw-pct" style="color:var(--green-light);">71%</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight:700;">3</td>
+                        <td>5</td>
+                        <td style="color:var(--mauve); font-weight:600;">Driver</td>
+                        <td>8/8</td>
+                        <td>
+                            <div class="fw-bar">
+                                <div class="fw-bar-track"><div class="fw-bar-fill poor" style="width:38%"></div></div>
+                                <span class="fw-pct" style="color:#E87070;">38%</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight:700;">4</td>
+                        <td>4</td>
+                        <td style="color:var(--mauve); font-weight:600;">3 Wood</td>
+                        <td>5/8</td>
+                        <td>
+                            <div class="fw-bar">
+                                <div class="fw-bar-track"><div class="fw-bar-fill good" style="width:80%"></div></div>
+                                <span class="fw-pct" style="color:var(--green-light);">80%</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight:700;">7</td>
+                        <td>4</td>
+                        <td style="color:var(--mauve); font-weight:600;">Driver</td>
+                        <td>8/8</td>
+                        <td>
+                            <div class="fw-bar">
+                                <div class="fw-bar-track"><div class="fw-bar-fill ok" style="width:50%"></div></div>
+                                <span class="fw-pct" style="color:var(--gold);">50%</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight:700;">10</td>
+                        <td>4</td>
+                        <td style="color:var(--mauve); font-weight:600;">5 Iron</td>
+                        <td>3/8</td>
+                        <td>
+                            <div class="fw-bar">
+                                <div class="fw-bar-track"><div class="fw-bar-fill good" style="width:100%"></div></div>
+                                <span class="fw-pct" style="color:var(--green-light);">100%</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight:700;">12</td>
+                        <td>4</td>
+                        <td style="color:var(--mauve); font-weight:600;">Driver</td>
+                        <td>8/8</td>
+                        <td>
+                            <div class="fw-bar">
+                                <div class="fw-bar-track"><div class="fw-bar-fill poor" style="width:25%"></div></div>
+                                <span class="fw-pct" style="color:#E87070;">25%</span>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight:700;">17</td>
+                        <td>4</td>
+                        <td style="color:var(--mauve); font-weight:600;">Driver</td>
+                        <td>6/8</td>
+                        <td>
+                            <div class="fw-bar">
+                                <div class="fw-bar-track"><div class="fw-bar-fill poor" style="width:33%"></div></div>
+                                <span class="fw-pct" style="color:#E87070;">33%</span>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- 3. GIR by Distance -->
+<section class="stat-section">
+    <div class="container">
+        <div class="stat-layout">
+            <div>
+                <div class="stat-header">
+                    <div class="section-label">Approach</div>
+                    <h2 class="section-title">GIR% by <span>Distance Range</span></h2>
+                    <p>How often do you hit the green based on how far out you are? This reveals where your iron game breaks down — and where it shines.</p>
+                </div>
+                <div class="gir-card fade-up">
+                    <div class="gir-card-title">Greens in Regulation</div>
+                    <div class="gir-card-sub">Across 8 rounds · 144 approach shots</div>
+                    <div class="gir-row">
+                        <span class="gir-label">&lt; 100 yds</span>
+                        <div class="gir-bar-track"><div class="gir-bar-fill gir-fill-green" style="width:72%">72%</div></div>
+                    </div>
+                    <div class="gir-row">
+                        <span class="gir-label">100–150 yds</span>
+                        <div class="gir-bar-track"><div class="gir-bar-fill gir-fill-gold" style="width:58%">58%</div></div>
+                    </div>
+                    <div class="gir-row">
+                        <span class="gir-label">150–200 yds</span>
+                        <div class="gir-bar-track"><div class="gir-bar-fill gir-fill-mauve" style="width:34%">34%</div></div>
+                    </div>
+                    <div class="gir-row">
+                        <span class="gir-label">200+ yds</span>
+                        <div class="gir-bar-track"><div class="gir-bar-fill gir-fill-mauve" style="width:12%">12%</div></div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="stat-header">
+                    <div class="section-label">Per Hole</div>
+                    <h2 class="section-title">Approach <span>Distance</span></h2>
+                    <p>Your average approach yardage on each hole across all rounds. Know your typical number before you get there.</p>
+                </div>
+                <div class="approach-card fade-up">
+                    <div class="approach-card-title">Avg Approach Distance by Hole</div>
+                    <div class="approach-card-sub">Front 9 · yards remaining</div>
+                    <div class="approach-holes">
+                        <div class="approach-hole">
+                            <span class="a-num">1</span>
+                            <div class="approach-bar-wrap"><div class="approach-bar" style="height:65%"></div></div>
+                            <span class="approach-yds">148</span>
+                        </div>
+                        <div class="approach-hole">
+                            <span class="a-num">2</span>
+                            <div class="approach-bar-wrap"><div class="approach-bar" style="height:100%"></div></div>
+                            <span class="approach-yds">172</span>
+                        </div>
+                        <div class="approach-hole">
+                            <span class="a-num">3</span>
+                            <div class="approach-bar-wrap"><div class="approach-bar" style="height:50%"></div></div>
+                            <span class="approach-yds">135</span>
+                        </div>
+                        <div class="approach-hole">
+                            <span class="a-num">4</span>
+                            <div class="approach-bar-wrap"><div class="approach-bar" style="height:40%"></div></div>
+                            <span class="approach-yds">122</span>
+                        </div>
+                        <div class="approach-hole">
+                            <span class="a-num">5</span>
+                            <div class="approach-bar-wrap"><div class="approach-bar" style="height:55%"></div></div>
+                            <span class="approach-yds">140</span>
+                        </div>
+                        <div class="approach-hole">
+                            <span class="a-num">6</span>
+                            <div class="approach-bar-wrap"><div class="approach-bar" style="height:75%"></div></div>
+                            <span class="approach-yds">156</span>
+                        </div>
+                        <div class="approach-hole">
+                            <span class="a-num">7</span>
+                            <div class="approach-bar-wrap"><div class="approach-bar" style="height:60%"></div></div>
+                            <span class="approach-yds">145</span>
+                        </div>
+                        <div class="approach-hole">
+                            <span class="a-num">8</span>
+                            <div class="approach-bar-wrap"><div class="approach-bar" style="height:35%"></div></div>
+                            <span class="approach-yds">108</span>
+                        </div>
+                        <div class="approach-hole">
+                            <span class="a-num">9</span>
+                            <div class="approach-bar-wrap"><div class="approach-bar" style="height:80%"></div></div>
+                            <span class="approach-yds">162</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 4. Club Around the Green -->
+<section class="stat-section">
+    <div class="container">
+        <div class="stat-layout">
+            <div>
+                <div class="stat-header">
+                    <div class="section-label">Short Game</div>
+                    <h2 class="section-title">Club Around <span>the Green</span></h2>
+                    <p>Which wedge do you reach for most? What's your up-and-down % with each? Find out which short game club is your secret weapon — and which one needs work.</p>
+                </div>
+            </div>
+            <div class="wedge-card fade-up">
+                <div style="font-size:14px; font-weight:700; margin-bottom:4px;">Up-and-Down % by Club</div>
+                <div style="font-size:11px; color:var(--text-dim); margin-bottom:16px;">When you miss the green, how often do you save par?</div>
+                <div class="wedge-row">
+                    <span class="wedge-name">56° Wedge</span>
+                    <span class="wedge-uses">34 uses</span>
+                    <div class="wedge-bar-track"><div class="wedge-bar-fill" style="width:48%"></div></div>
+                    <span class="wedge-pct">48%</span>
+                </div>
+                <div class="wedge-row">
+                    <span class="wedge-name">52° Wedge</span>
+                    <span class="wedge-uses">22 uses</span>
+                    <div class="wedge-bar-track"><div class="wedge-bar-fill" style="width:55%; background:var(--green-light);"></div></div>
+                    <span class="wedge-pct" style="color:var(--green-light);">55%</span>
+                </div>
+                <div class="wedge-row">
+                    <span class="wedge-name">PW</span>
+                    <span class="wedge-uses">15 uses</span>
+                    <div class="wedge-bar-track"><div class="wedge-bar-fill" style="width:40%"></div></div>
+                    <span class="wedge-pct">40%</span>
+                </div>
+                <div class="wedge-row">
+                    <span class="wedge-name">Putter</span>
+                    <span class="wedge-uses">8 uses</span>
+                    <div class="wedge-bar-track"><div class="wedge-bar-fill" style="width:63%; background:var(--mauve);"></div></div>
+                    <span class="wedge-pct" style="color:var(--mauve);">63%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- 5. Scoring Trends -->
+<section class="stat-section">
+    <div class="container">
+        <div class="stat-layout">
+            <div class="chart-card fade-up">
+                <div class="section-label" style="text-align:left;">Trends</div>
+                <div class="chart-title">Scoring Over Time</div>
+                <div class="chart-sub">Your last 8 rounds at Pinecrest</div>
+                <div class="line-chart">
+                    <div class="chart-y-axis">
+                        <span class="chart-y-label">94</span>
+                        <span class="chart-y-label">88</span>
+                        <span class="chart-y-label">82</span>
+                        <span class="chart-y-label">76</span>
+                    </div>
+                    <div class="chart-area">
+                        <div class="chart-gridline" style="top:0%"></div>
+                        <div class="chart-gridline" style="top:33%"></div>
+                        <div class="chart-gridline" style="top:66%"></div>
+                        <div class="chart-gridline" style="top:100%"></div>
+                        <div class="chart-points">
+                            <div class="chart-point" style="left:2%; bottom:22%"></div>
+                            <div class="chart-point" style="left:16%; bottom:33%"></div>
+                            <div class="chart-point" style="left:30%; bottom:28%"></div>
+                            <div class="chart-point" style="left:44%; bottom:44%"></div>
+                            <div class="chart-point" style="left:58%; bottom:50%"></div>
+                            <div class="chart-point" style="left:72%; bottom:56%"></div>
+                            <div class="chart-point" style="left:86%; bottom:61%"></div>
+                            <div class="chart-point" style="left:98%; bottom:72%"></div>
+                        </div>
+                        <svg style="position:absolute; inset:0; width:100%; height:100%; overflow:visible;" preserveAspectRatio="none">
+                            <polyline points="2,78 16,67 30,72 44,56 58,50 72,44 86,39 98,28"
+                                      fill="none" stroke="rgba(200,173,187,0.4)" stroke-width="2"
+                                      vector-effect="non-scaling-stroke"
+                                      style="transform: scaleX(1) scaleY(1);" />
+                            <defs>
+                                <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="rgba(200,173,187,0.15)" />
+                                    <stop offset="100%" stop-color="rgba(200,173,187,0)" />
+                                </linearGradient>
+                            </defs>
+                            <polygon points="2,78 16,67 30,72 44,56 58,50 72,44 86,39 98,28 98,100 2,100"
+                                     fill="url(#areaGrad)" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="chart-x-labels">
+                    <span class="chart-x-label">Jan 12</span>
+                    <span class="chart-x-label">Feb 2</span>
+                    <span class="chart-x-label">Feb 16</span>
+                    <span class="chart-x-label">Mar 1</span>
+                    <span class="chart-x-label">Mar 15</span>
+                    <span class="chart-x-label">Mar 22</span>
+                    <span class="chart-x-label">Mar 29</span>
+                    <span class="chart-x-label">Apr 5</span>
+                </div>
+                <div class="trend-badge">↓ 8 strokes improvement over 8 rounds</div>
+            </div>
+            <div>
+                <div class="stat-header">
+                    <div class="section-label">Putting</div>
+                    <h2 class="section-title">Putting <span>Stats</span></h2>
+                    <p>Your putting averages across all rounds. Track one-putt % and keep three-putts in check.</p>
+                </div>
+                <div class="putt-grid">
+                    <div class="putt-card fade-up">
+                        <div class="putt-val">1.82</div>
+                        <div class="putt-label">Avg Putts/Hole</div>
+                        <div class="putt-desc">Across 144 holes</div>
+                    </div>
+                    <div class="putt-card fade-up">
+                        <div class="putt-val" style="color:var(--green-light);">34%</div>
+                        <div class="putt-label">One-Putt %</div>
+                        <div class="putt-desc">Make it in one</div>
+                    </div>
+                    <div class="putt-card fade-up">
+                        <div class="putt-val" style="color:#E87070;">8%</div>
+                        <div class="putt-label">Three-Putt %</div>
+                        <div class="putt-desc">Room to improve</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Emphasis Banner -->
+<section class="emphasis-section">
+    <div class="container">
+        <div class="emphasis-card fade-up">
+            <div class="section-label">Your Playbook</div>
+            <h2>Play your home course <span>3, 5, 10 times</span> — and these stats paint a complete picture of your game</h2>
+            <p>Every round you log adds another layer of intelligence. No more guessing — just data-backed decisions on every tee and approach.</p>
+            <div class="round-dots">
+                <div class="round-dot filled"></div>
+                <div class="round-dot filled"></div>
+                <div class="round-dot filled"></div>
+                <div class="round-dot filled"></div>
+                <div class="round-dot filled"></div>
+                <div class="round-dot partial"></div>
+                <div class="round-dot partial"></div>
+                <div class="round-dot"></div>
+                <div class="round-dot"></div>
+                <div class="round-dot"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+    <div class="container">
+        <div class="cta-card fade-up">
+            <div style="font-size:48px; margin-bottom:16px;">📊</div>
+            <h2>Start Building Your Stats</h2>
+            <p>Free on the App Store. Log your first round and watch the insights build.</p>
+            <a href="https://apps.apple.com/us/app/homecourse-hero/id6761485344" target="_blank" rel="noopener" class="btn-cta">
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.32 2.32-2.11 4.45-3.74 4.25z" fill="currentColor"/></svg>
+                Download on the App Store
+            </a>
+        </div>
+    </div>
+</section>
+
+<footer>
+    <div class="container">
+        <div class="footer-brand">HomeCourse <span>Hero</span></div>
+        <div class="footer-links">
+            <a href="privacy.html">Privacy</a>
+            <a href="https://apps.apple.com/us/app/homecourse-hero/id6761485344" target="_blank">App Store</a>
+            <a href="mailto:support@homecoursehero.com">Contact</a>
+        </div>
+    </div>
+</footer>
+
+<script>
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.classList.add('visible');
+    });
+}, { threshold: 0.1 });
+document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

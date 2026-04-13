@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Badges — HomeCourse Hero</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --green: #508660;
+            --green-dark: #3a6b4a;
+            --green-light: #6aaa7a;
+            --mauve: #c8adbb;
+            --mauve-light: #ddc8d4;
+            --mauve-glow: rgba(200, 173, 187, 0.14);
+            --gold: #C2A04D;
+            --gold-light: #D4B96A;
+            --gold-glow: rgba(194, 160, 77, 0.12);
+            --bg: #0d1510;
+            --bg-card: #141e17;
+            --bg-card-hover: #1c2620;
+            --text: #F0F5EE;
+            --text-muted: #90b898;
+            --text-dim: #5a7860;
+            --border: rgba(200, 173, 187, 0.14);
+            --radius: 16px;
+            --red-dark: #5C1E1E;
+            --red: #7A2E2E;
+            --red-light: #9A3E3E;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .glow-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .glow-1 { width: 600px; height: 600px; background: rgba(80, 134, 96, 0.15); top: -200px; left: -200px; }
+        .glow-2 { width: 500px; height: 500px; background: rgba(200, 173, 187, 0.1); top: 40%; right: -200px; }
+        .glow-3 { width: 700px; height: 700px; background: rgba(80, 134, 96, 0.1); bottom: -300px; left: 30%; }
+        .glow-4 { width: 500px; height: 500px; background: rgba(122, 46, 46, 0.12); top: 60%; left: -200px; }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+        /* ─── Nav ─── */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            background: rgba(13, 21, 16, 0.8);
+            border-bottom: 1px solid var(--border);
+        }
+        nav .container {
+            display: flex; align-items: center; justify-content: space-between;
+            height: 64px;
+        }
+        .nav-brand {
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .nav-brand img {
+            height: 38px;
+            width: 38px;
+            display: block;
+            border-radius: 9px;
+            object-fit: cover;
+        }
+        .nav-brand-text {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 17px;
+            color: var(--text);
+            letter-spacing: 0.02em;
+        }
+        
+        .nav-links { display: flex; gap: 32px; align-items: center; }
+        .nav-links a {
+            font-size: 14px; font-weight: 500; color: var(--text-muted);
+            text-decoration: none; transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--text); }
+        .nav-cta {
+            font-size: 13px !important; font-weight: 600 !important;
+            color: var(--bg) !important;
+            background: var(--mauve);
+            padding: 8px 20px; border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .nav-cta:hover { background: var(--mauve-light); transform: translateY(-1px); }
+
+        /* ─── Hero ─── */
+        .hero {
+            padding: 140px 0 60px;
+            text-align: center;
+        }
+        .hero-label {
+            display: inline-block;
+            font-size: 12px; font-weight: 700; letter-spacing: 3px;
+            text-transform: uppercase; color: var(--mauve);
+            margin-bottom: 20px;
+        }
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(42px, 7vw, 72px);
+            font-weight: 900; line-height: 1.05;
+            margin-bottom: 20px;
+        }
+        .hero h1 .accent { color: var(--mauve); }
+        .hero .subtitle {
+            font-size: clamp(16px, 2.5vw, 20px);
+            color: var(--text-muted);
+            max-width: 540px; margin: 0 auto;
+            line-height: 1.6;
+        }
+        .hero-stat-row {
+            display: flex; justify-content: center; gap: 48px;
+            margin-top: 40px;
+        }
+        .hero-stat {
+            text-align: center;
+        }
+        .hero-stat .number {
+            font-family: 'Playfair Display', serif;
+            font-size: 36px; font-weight: 900; color: var(--gold);
+        }
+        .hero-stat .label {
+            font-size: 13px; color: var(--text-dim); margin-top: 4px;
+        }
+
+        /* ─── Section ─── */
+        .section {
+            padding: 80px 0;
+        }
+        .section-label {
+            font-size: 12px; font-weight: 700; letter-spacing: 3px;
+            text-transform: uppercase; color: var(--mauve);
+            margin-bottom: 12px;
+        }
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(28px, 4vw, 40px);
+            font-weight: 900; margin-bottom: 8px;
+        }
+        .section-subtitle {
+            font-size: 16px; color: var(--text-muted);
+            margin-bottom: 48px; max-width: 500px;
+        }
+        .section-center {
+            text-align: center;
+        }
+        .section-center .section-subtitle {
+            margin-left: auto; margin-right: auto;
+        }
+
+        /* ─── Badge Grid ─── */
+        .badge-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+        }
+
+        .badge-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px 16px 24px;
+            text-align: center;
+            transition: all 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .badge-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0;
+            height: 3px;
+            opacity: 0;
+            transition: opacity 0.35s;
+        }
+        .badge-card.positive::before {
+            background: linear-gradient(90deg, var(--green-dark), var(--green-light));
+        }
+        .badge-card.shame::before {
+            background: linear-gradient(90deg, var(--red-dark), var(--red-light));
+        }
+        .badge-card:hover {
+            background: var(--bg-card-hover);
+            transform: translateY(-6px) scale(1.02);
+            border-color: rgba(200, 173, 187, 0.25);
+        }
+        .badge-card.positive:hover {
+            box-shadow: 0 8px 40px rgba(80, 134, 96, 0.2), 0 0 60px rgba(80, 134, 96, 0.08);
+        }
+        .badge-card.shame:hover {
+            box-shadow: 0 8px 40px rgba(122, 46, 46, 0.25), 0 0 60px rgba(122, 46, 46, 0.1);
+        }
+        .badge-card:hover::before { opacity: 1; }
+
+        .badge-icon {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 16px;
+            font-size: 34px;
+            position: relative;
+            border: 2.5px solid var(--gold);
+            box-shadow: 0 0 20px rgba(194, 160, 77, 0.15), inset 0 0 20px rgba(0,0,0,0.3);
+            transition: all 0.35s;
+        }
+        .badge-card:hover .badge-icon {
+            transform: scale(1.1);
+        }
+        .positive .badge-icon {
+            background: linear-gradient(135deg, #3a6b4a, #508660);
+            box-shadow: 0 0 20px rgba(80, 134, 96, 0.25), inset 0 0 20px rgba(0,0,0,0.3);
+        }
+        .positive:hover .badge-icon {
+            box-shadow: 0 0 30px rgba(80, 134, 96, 0.4), 0 0 60px rgba(80, 134, 96, 0.15), inset 0 0 20px rgba(0,0,0,0.3);
+        }
+        .shame .badge-icon {
+            background: linear-gradient(135deg, #5C1E1E, #7A2E2E);
+            box-shadow: 0 0 20px rgba(122, 46, 46, 0.25), inset 0 0 20px rgba(0,0,0,0.3);
+        }
+        .shame:hover .badge-icon {
+            box-shadow: 0 0 30px rgba(122, 46, 46, 0.4), 0 0 60px rgba(122, 46, 46, 0.15), inset 0 0 20px rgba(0,0,0,0.3);
+        }
+
+        .badge-name {
+            font-size: 13px; font-weight: 700;
+            color: var(--mauve);
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+        .badge-desc {
+            font-size: 12px; color: var(--text-dim);
+            line-height: 1.5;
+        }
+
+        /* ─── How Badges Work ─── */
+        .how-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 24px;
+        }
+        .how-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px 24px;
+            transition: all 0.3s;
+        }
+        .how-card:hover {
+            background: var(--bg-card-hover);
+            transform: translateY(-3px);
+            border-color: rgba(200, 173, 187, 0.22);
+        }
+        .how-icon {
+            width: 48px; height: 48px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(200, 173, 187, 0.12), rgba(200, 173, 187, 0.04));
+            border: 1px solid rgba(200, 173, 187, 0.15);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            margin-bottom: 16px;
+        }
+        .how-card h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px; font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .how-card p {
+            font-size: 14px; color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* ─── Badge Profile Mock ─── */
+        .profile-mock {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px;
+            max-width: 480px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+        }
+        .profile-mock::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--mauve), var(--green), var(--gold));
+        }
+        .profile-header {
+            display: flex; align-items: center; gap: 16px;
+            margin-bottom: 24px;
+        }
+        .profile-avatar {
+            width: 52px; height: 52px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--green-dark), var(--green));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            border: 2px solid var(--mauve-glow);
+        }
+        .profile-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px; font-weight: 700;
+        }
+        .profile-stats {
+            font-size: 13px; color: var(--text-muted);
+        }
+        .profile-stats span {
+            color: var(--gold); font-weight: 700;
+        }
+        .profile-badge-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+        }
+        .profile-badge {
+            position: relative;
+            text-align: center;
+        }
+        .profile-badge-circle {
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+            margin: 0 auto 4px;
+            border: 2px solid var(--gold);
+            position: relative;
+        }
+        .profile-badge-circle.earned-green {
+            background: linear-gradient(135deg, #3a6b4a, #508660);
+            box-shadow: 0 0 12px rgba(80, 134, 96, 0.3);
+        }
+        .profile-badge-circle.earned-red {
+            background: linear-gradient(135deg, #5C1E1E, #7A2E2E);
+            box-shadow: 0 0 12px rgba(122, 46, 46, 0.3);
+        }
+        .profile-badge-circle.locked {
+            background: rgba(255,255,255,0.04);
+            border-color: var(--text-dim);
+            opacity: 0.35;
+            filter: grayscale(1);
+        }
+        .profile-badge-count {
+            position: absolute; top: -4px; right: -4px;
+            background: var(--gold);
+            color: var(--bg);
+            font-size: 10px; font-weight: 800;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            line-height: 1;
+        }
+        .profile-badge-label {
+            font-size: 9px;
+            color: var(--text-dim);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .profile-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 20px 0;
+        }
+        .profile-total {
+            text-align: center;
+            font-size: 13px; color: var(--text-muted);
+        }
+        .profile-total strong {
+            color: var(--gold); font-size: 22px; font-weight: 800;
+        }
+
+        /* ─── CTA ─── */
+        .cta-section {
+            padding: 80px 0 100px;
+            text-align: center;
+        }
+        .cta-section .section-label { margin-bottom: 16px; }
+        .cta-section h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(28px, 4vw, 40px);
+            font-weight: 900; margin-bottom: 16px;
+        }
+        .cta-section p {
+            font-size: 16px; color: var(--text-muted);
+            margin-bottom: 32px;
+            max-width: 420px; margin-left: auto; margin-right: auto;
+        }
+        .cta-btn {
+            display: inline-flex; align-items: center; gap: 10px;
+            background: linear-gradient(135deg, #c8adbb, #a8889e);
+            color: var(--bg); font-weight: 700; font-size: 16px;
+            padding: 16px 36px; border-radius: 12px;
+            text-decoration: none;
+            transition: all 0.3s;
+            box-shadow: 0 4px 24px rgba(200, 173, 187, 0.25);
+        }
+        .cta-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(200, 173, 187, 0.35);
+        }
+
+        /* ─── Footer ─── */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 32px 0;
+        }
+        footer .container {
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .footer-brand {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px; font-weight: 700; color: var(--text);
+        }
+        .footer-brand span { color: var(--mauve); }
+        .footer-links { display: flex; gap: 24px; }
+        .footer-links a {
+            font-size: 13px; color: var(--text-dim);
+            text-decoration: none; transition: color 0.2s;
+        }
+        .footer-links a:hover { color: var(--text-muted); }
+
+        /* ─── Animations ─── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-up {
+            opacity: 0;
+            animation: fadeUp 0.7s ease forwards;
+        }
+        .fade-up.d1 { animation-delay: 0.1s; }
+        .fade-up.d2 { animation-delay: 0.2s; }
+        .fade-up.d3 { animation-delay: 0.3s; }
+        .fade-up.d4 { animation-delay: 0.4s; }
+
+        .badge-card {
+            opacity: 0;
+            transform: translateY(24px);
+        }
+        .badge-card.visible {
+            animation: fadeUp 0.5s ease forwards;
+        }
+
+        /* ─── Section Divider ─── */
+        .section-divider {
+            width: 60px; height: 3px;
+            background: linear-gradient(90deg, var(--mauve), transparent);
+            border-radius: 2px;
+            margin-bottom: 40px;
+        }
+        .section-center .section-divider {
+            margin-left: auto; margin-right: auto;
+        }
+
+        /* ─── Responsive ─── */
+        @media (max-width: 768px) {
+            .nav-links a:not(.nav-cta) { display: none; }
+            .badge-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 14px;
+            }
+            .badge-icon { width: 64px; height: 64px; font-size: 28px; }
+            .badge-name { font-size: 11px; }
+            .badge-desc { font-size: 11px; }
+            .badge-card { padding: 20px 12px 18px; }
+            .how-grid { grid-template-columns: 1fr; }
+            .profile-mock { padding: 24px 20px; }
+            .profile-badge-grid { grid-template-columns: repeat(4, 1fr); gap: 10px; }
+            .profile-badge-circle { width: 40px; height: 40px; font-size: 16px; }
+            .hero-stat-row { gap: 28px; }
+            .hero-stat .number { font-size: 28px; }
+            footer .container { flex-direction: column; gap: 16px; text-align: center; }
+        }
+
+        @media (max-width: 480px) {
+            .badge-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            .hero-stat-row { flex-direction: column; gap: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="glow-orb glow-1"></div>
+<div class="glow-orb glow-2"></div>
+<div class="glow-orb glow-3"></div>
+<div class="glow-orb glow-4"></div>
+
+<nav><div class="container">
+    <a href="index.html" class="nav-brand"><img src="images/icon-76.png" alt="HomeCourse Hero"><span class="nav-brand-text">HomeCourse Hero</span></a>
+    <div class="nav-links">
+        <a href="index.html#features">Features</a>
+        <a href="index.html#insights">Deep Stats</a>
+        <a href="badges.html">Badges</a>
+        <a href="https://apps.apple.com/us/app/homecourse-hero/id6761485344" target="_blank" rel="noopener" class="nav-cta">Get the App</a>
+    </div>
+</div></nav>
+
+<!-- ════════════ HERO ════════════ -->
+<section class="hero">
+    <div class="container">
+        <div class="hero-label fade-up">BADGES</div>
+        <h1 class="fade-up d1">Earn Your <span class="accent">Stripes</span></h1>
+        <p class="subtitle fade-up d2">20 badges to unlock. Some you'll brag about. Some you'll deny.</p>
+        <div class="hero-stat-row fade-up d3">
+            <div class="hero-stat">
+                <div class="number">20</div>
+                <div class="label">Total Badges</div>
+            </div>
+            <div class="hero-stat">
+                <div class="number">10</div>
+                <div class="label">Achievements</div>
+            </div>
+            <div class="hero-stat">
+                <div class="number">10</div>
+                <div class="label">Shame Badges</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ════════════ ACHIEVEMENT BADGES ════════════ -->
+<section class="section">
+    <div class="container">
+        <div class="section-label fade-up">ACHIEVEMENT BADGES</div>
+        <h2 class="section-title fade-up d1">The Glory Wall</h2>
+        <p class="section-subtitle fade-up d2">For the moments that make you feel like a tour pro.</p>
+        <div class="section-divider fade-up d2"></div>
+
+        <div class="badge-grid">
+            <div class="badge-card positive">
+                <div class="badge-icon">🔥</div>
+                <div class="badge-name">Double Kill</div>
+                <div class="badge-desc">2 birdies in a row</div>
+            </div>
+            <div class="badge-card positive">
+                <div class="badge-icon">🪱</div>
+                <div class="badge-name">Shai-Hulud</div>
+                <div class="badge-desc">Up & down from a greenside bunker</div>
+            </div>
+            <div class="badge-card positive">
+                <div class="badge-icon">⛳</div>
+                <div class="badge-name">Greenskeeper</div>
+                <div class="badge-desc">Under 20 putts in a round</div>
+            </div>
+            <div class="badge-card positive">
+                <div class="badge-icon">🫳</div>
+                <div class="badge-name">Shanananananana</div>
+                <div class="badge-desc">5 one-putts in a row</div>
+            </div>
+            <div class="badge-card positive">
+                <div class="badge-icon">🍳</div>
+                <div class="badge-name">Yes Chef</div>
+                <div class="badge-desc">10 one-putts in a row</div>
+            </div>
+            <div class="badge-card positive">
+                <div class="badge-icon">🎯</div>
+                <div class="badge-name">Rippin' Darts</div>
+                <div class="badge-desc">5 greens in regulation in a row</div>
+            </div>
+            <div class="badge-card positive">
+                <div class="badge-icon">🛣️</div>
+                <div class="badge-name">Fairway Finder</div>
+                <div class="badge-desc">5 fairways in a row</div>
+            </div>
+            <div class="badge-card positive">
+                <div class="badge-icon">🛤️</div>
+                <div class="badge-name">Fairway Frenzy</div>
+                <div class="badge-desc">10 fairways in a row</div>
+            </div>
+            <div class="badge-card positive">
+                <div class="badge-icon">☀️</div>
+                <div class="badge-name">Lisan Al Gaib</div>
+                <div class="badge-desc">5 up & downs from greenside bunker in a round</div>
+            </div>
+            <div class="badge-card positive">
+                <div class="badge-icon">🦅</div>
+                <div class="badge-name">Big Bird</div>
+                <div class="badge-desc">Eagle on a hole</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ════════════ SHAME BADGES ════════════ -->
+<section class="section">
+    <div class="container">
+        <div class="section-label fade-up">SHAME BADGES</div>
+        <h2 class="section-title fade-up d1">The Wall of Shame</h2>
+        <p class="section-subtitle fade-up d2">Every golfer earns these. Nobody talks about them.</p>
+        <div class="section-divider fade-up d2"></div>
+
+        <div class="badge-grid">
+            <div class="badge-card shame">
+                <div class="badge-icon">🐾</div>
+                <div class="badge-name">Animal Style</div>
+                <div class="badge-desc">Back to back double bogeys</div>
+            </div>
+            <div class="badge-card shame">
+                <div class="badge-icon">🎭</div>
+                <div class="badge-name">Goblin Mode</div>
+                <div class="badge-desc">Back to back triple bogeys</div>
+            </div>
+            <div class="badge-card shame">
+                <div class="badge-icon">🦴</div>
+                <div class="badge-name">Neanderthal</div>
+                <div class="badge-desc">Quad bogey on a hole</div>
+            </div>
+            <div class="badge-card shame">
+                <div class="badge-icon">✋</div>
+                <div class="badge-name">I Got 5 On It</div>
+                <div class="badge-desc">Quintuple bogey on a hole</div>
+            </div>
+            <div class="badge-card shame">
+                <div class="badge-icon">🏖️</div>
+                <div class="badge-name">Beach Day</div>
+                <div class="badge-desc">5 bunkers in a round</div>
+            </div>
+            <div class="badge-card shame">
+                <div class="badge-icon">🧦</div>
+                <div class="badge-name">Quick Sleeve</div>
+                <div class="badge-desc">Multiple drops on a single hole</div>
+            </div>
+            <div class="badge-card shame">
+                <div class="badge-icon">🙈</div>
+                <div class="badge-name">Helen Keller</div>
+                <div class="badge-desc">Miss every green in regulation</div>
+            </div>
+            <div class="badge-card shame">
+                <div class="badge-icon">🪑</div>
+                <div class="badge-name">Cuck Chair</div>
+                <div class="badge-desc">9-hole score over 50</div>
+            </div>
+            <div class="badge-card shame">
+                <div class="badge-icon">💔</div>
+                <div class="badge-name">Wife's Boyfriend</div>
+                <div class="badge-desc">18-hole score over 100</div>
+            </div>
+            <div class="badge-card shame">
+                <div class="badge-icon">🎖️</div>
+                <div class="badge-name">Nice Shooting Soldier!</div>
+                <div class="badge-desc">Miss 10 fairways in a row</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ════════════ HOW BADGES WORK ════════════ -->
+<section class="section">
+    <div class="container section-center">
+        <div class="section-label fade-up">HOW IT WORKS</div>
+        <h2 class="section-title fade-up d1">How Badges Work</h2>
+        <p class="section-subtitle fade-up d2">Badges aren't just trophies — they're live moments captured during your round.</p>
+        <div class="section-divider fade-up d2"></div>
+
+        <div class="how-grid">
+            <div class="how-card fade-up">
+                <div class="how-icon">⚡</div>
+                <h3>Real-Time Detection</h3>
+                <p>Badges are earned in real-time as you score your round. Hit two birdies in a row? You'll know instantly.</p>
+            </div>
+            <div class="how-card fade-up d1">
+                <div class="how-icon">🎉</div>
+                <h3>Pop-Up Alerts</h3>
+                <p>When a badge triggers, a pop-up appears on screen with the badge animation. Hard to miss — even the ones you'd rather not see.</p>
+            </div>
+            <div class="how-card fade-up d2">
+                <div class="how-icon">📜</div>
+                <h3>Full History</h3>
+                <p>Every badge you've ever earned is tracked in your profile. View your full badge history with timestamps and counts.</p>
+            </div>
+            <div class="how-card fade-up d3">
+                <div class="how-icon">📍</div>
+                <h3>Hole & Course Tracked</h3>
+                <p>Each badge records which hole and course it was earned on. Relive the glory — or the horror — in full context.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ════════════ BADGE PROFILE MOCK ════════════ -->
+<section class="section">
+    <div class="container section-center">
+        <div class="section-label fade-up">YOUR COLLECTION</div>
+        <h2 class="section-title fade-up d1">Badge Profile</h2>
+        <p class="section-subtitle fade-up d2">See all your earned badges at a glance with lifetime counts.</p>
+        <div class="section-divider fade-up d2"></div>
+
+        <div class="profile-mock fade-up d3">
+            <div class="profile-header">
+                <div class="profile-avatar">⛳</div>
+                <div>
+                    <div class="profile-name">Weekend Warrior</div>
+                    <div class="profile-stats"><span>14</span> badges earned · 7 unique</div>
+                </div>
+            </div>
+
+            <div class="profile-badge-grid">
+                <div class="profile-badge">
+                    <div class="profile-badge-circle earned-green">
+                        <span class="profile-badge-count">3</span>
+                        🔥
+                    </div>
+                    <div class="profile-badge-label">Double Kill</div>
+                </div>
+                <div class="profile-badge">
+                    <div class="profile-badge-circle earned-green">
+                        <span class="profile-badge-count">1</span>
+                        🪱
+                    </div>
+                    <div class="profile-badge-label">Shai-Hulud</div>
+                </div>
+                <div class="profile-badge">
+                    <div class="profile-badge-circle earned-green">
+                        <span class="profile-badge-count">2</span>
+                        🛣️
+                    </div>
+                    <div class="profile-badge-label">Fairway Finder</div>
+                </div>
+                <div class="profile-badge">
+                    <div class="profile-badge-circle earned-green">
+                        <span class="profile-badge-count">1</span>
+                        🦅
+                    </div>
+                    <div class="profile-badge-label">Big Bird</div>
+                </div>
+                <div class="profile-badge">
+                    <div class="profile-badge-circle locked">
+                        ⛳
+                    </div>
+                    <div class="profile-badge-label">Greenskeeper</div>
+                </div>
+                <div class="profile-badge">
+                    <div class="profile-badge-circle earned-red">
+                        <span class="profile-badge-count">4</span>
+                        🐾
+                    </div>
+                    <div class="profile-badge-label">Animal Style</div>
+                </div>
+                <div class="profile-badge">
+                    <div class="profile-badge-circle earned-red">
+                        <span class="profile-badge-count">2</span>
+                        🏖️
+                    </div>
+                    <div class="profile-badge-label">Beach Day</div>
+                </div>
+                <div class="profile-badge">
+                    <div class="profile-badge-circle earned-red">
+                        <span class="profile-badge-count">1</span>
+                        🦴
+                    </div>
+                    <div class="profile-badge-label">Neanderthal</div>
+                </div>
+                <div class="profile-badge">
+                    <div class="profile-badge-circle locked">
+                        🎭
+                    </div>
+                    <div class="profile-badge-label">Goblin Mode</div>
+                </div>
+                <div class="profile-badge">
+                    <div class="profile-badge-circle locked">
+                        🪑
+                    </div>
+                    <div class="profile-badge-label">Cuck Chair</div>
+                </div>
+            </div>
+
+            <div class="profile-divider"></div>
+            <div class="profile-total">
+                <strong>14</strong><br>
+                Total Badges Earned
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ════════════ CTA ════════════ -->
+<section class="cta-section">
+    <div class="container">
+        <div class="section-label fade-up">START COLLECTING</div>
+        <h2 class="fade-up d1">Ready to Earn Yours?</h2>
+        <p class="fade-up d2">Download HomeCourse Hero and start tracking your rounds. The badges will follow.</p>
+        <a href="https://apps.apple.com/us/app/homecourse-hero/id6761485344" target="_blank" rel="noopener" class="cta-btn fade-up d3">
+            Download on the App Store
+        </a>
+    </div>
+</section>
+
+<footer><div class="container">
+    <div class="footer-brand">HomeCourse <span>Hero</span></div>
+    <div class="footer-links">
+        <a href="privacy.html">Privacy</a>
+        <a href="https://apps.apple.com/us/app/homecourse-hero/id6761485344" target="_blank">App Store</a>
+        <a href="mailto:support@homecoursehero.com">Contact</a>
+    </div>
+</div></footer>
+
+<script>
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+            const cards = entry.target.querySelectorAll('.badge-card');
+            cards.forEach((card, idx) => {
+                card.style.animationDelay = `${idx * 0.07}s`;
+                card.classList.add('visible');
+            });
+            observer.unobserve(entry.target);
+        }
+    });
+}, { threshold: 0.15 });
+
+document.querySelectorAll('.badge-grid').forEach(grid => observer.observe(grid));
+
+const fadeObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+        }
+    });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.fade-up').forEach(el => fadeObserver.observe(el));
+</script>
+
+</body>
+</html>

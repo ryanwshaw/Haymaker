@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy — HomeCourse Hero</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --green: #508660;
+            --green-dark: #3a6b4a;
+            --mauve: #c8adbb;
+            --gold: #C2A04D;
+            --bg: #0d1510;
+            --bg-card: #141e17;
+            --text: #F0F5EE;
+            --text-muted: #90b898;
+            --text-dim: #5a7860;
+            --border: rgba(200, 173, 187, 0.12);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
+        }
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            background: rgba(13, 21, 16, 0.8);
+            border-bottom: 1px solid var(--border);
+        }
+        nav .container {
+            max-width: 1100px; margin: 0 auto; padding: 0 24px;
+            display: flex; align-items: center; justify-content: space-between;
+            height: 64px;
+        }
+        .nav-brand {
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .nav-brand img {
+            height: 38px;
+            width: 38px;
+            display: block;
+            border-radius: 9px;
+            object-fit: cover;
+        }
+        .nav-brand-text {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            font-size: 17px;
+            color: var(--text);
+            letter-spacing: 0.02em;
+        }
+        
+        .nav-back {
+            font-size: 14px; font-weight: 500; color: var(--text-muted);
+            text-decoration: none; transition: color 0.2s;
+        }
+        .nav-back:hover { color: var(--gold); }
+        .content {
+            max-width: 720px; margin: 0 auto; padding: 120px 24px 80px;
+        }
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 36px; font-weight: 900; margin-bottom: 8px;
+        }
+        .last-updated {
+            font-size: 13px; color: var(--text-dim); margin-bottom: 40px;
+        }
+        h2 {
+            font-size: 20px; font-weight: 700; margin-top: 36px; margin-bottom: 12px;
+            color: var(--mauve);
+        }
+        p, li {
+            font-size: 15px; color: var(--text-muted); line-height: 1.8;
+            margin-bottom: 12px;
+        }
+        ul {
+            padding-left: 20px; margin-bottom: 16px;
+        }
+        li { margin-bottom: 6px; }
+        a { color: var(--mauve); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 32px 0;
+        }
+        footer .container {
+            max-width: 1100px; margin: 0 auto; padding: 0 24px;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 16px;
+        }
+        .footer-brand {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px; color: var(--text-muted);
+        }
+        .footer-links { display: flex; gap: 24px; }
+        .footer-links a {
+            font-size: 13px; color: var(--text-dim);
+            text-decoration: none; transition: color 0.2s;
+        }
+        .footer-links a:hover { color: var(--mauve); }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="container">
+        <a href="/" class="nav-brand"><img src="images/icon-76.png" alt="HomeCourse Hero"></a>
+        <a href="/" class="nav-back">← Back to Home</a>
+    </div>
+</nav>
+
+<div class="content">
+    <h1>Privacy Policy</h1>
+    <p class="last-updated">Last updated: April 1, 2026</p>
+
+    <p>HomeCourse Hero ("we," "our," or "the app") is committed to protecting your privacy. This policy explains what data we collect, how we use it, and your rights.</p>
+
+    <h2>1. Data We Collect</h2>
+    <p>HomeCourse Hero stores the following data locally on your device:</p>
+    <ul>
+        <li><strong>Golf round data</strong> — scores, club selections, approach distances, fairway/green results, putts, and other shot-level details you log during rounds.</li>
+        <li><strong>Course information</strong> — course names, hole details, pars, and yardages you enter or select.</li>
+        <li><strong>Friend and match data</strong> — names of friends you add, match scores, and head-to-head records.</li>
+        <li><strong>Preferences</strong> — club yardages, tee selections, display settings, and other app preferences.</li>
+        <li><strong>Launch monitor and swing data</strong> — club distances, ball speed, spin rates, swing plane stats, and equipment specs you upload through the website.</li>
+    </ul>
+
+    <h2>2. How Data Is Stored</h2>
+    <p>All app data is stored <strong>locally on your device</strong> using Apple's SwiftData framework. We do not operate servers that store your personal golf data. Your data remains on your iPhone unless you choose to export or share it.</p>
+    <p>Data uploaded through the HomeCourse Hero website (such as launch monitor CSVs and swing analysis data) is stored in your browser's local storage and is not transmitted to any server.</p>
+
+    <h2>3. Data We Do NOT Collect</h2>
+    <ul>
+        <li>We do not collect your location or GPS data.</li>
+        <li>We do not access your contacts, photos, or other personal files.</li>
+        <li>We do not use analytics or tracking SDKs.</li>
+        <li>We do not sell, share, or transmit your data to third parties.</li>
+        <li>We do not display advertisements.</li>
+    </ul>
+
+    <h2>4. Account Information</h2>
+    <p>If you create an account on the HomeCourse Hero website, we store your display name and email address in your browser's local storage. This information is not transmitted to any external server. No passwords are stored in plain text.</p>
+
+    <h2>5. Third-Party Services</h2>
+    <p>HomeCourse Hero does not integrate with third-party analytics, advertising, or tracking services. The app does not make network requests to external services beyond Apple's standard App Store and system frameworks.</p>
+
+    <h2>6. Data Deletion</h2>
+    <p>You can delete all your data at any time by:</p>
+    <ul>
+        <li><strong>In the app:</strong> Deleting individual rounds, courses, or friends through the app interface, or uninstalling the app entirely (which removes all locally stored data).</li>
+        <li><strong>On the website:</strong> Clearing your browser's local storage or using your browser's "Clear site data" feature for homecoursehero.com.</li>
+    </ul>
+
+    <h2>7. Children's Privacy</h2>
+    <p>HomeCourse Hero is not directed at children under the age of 13. We do not knowingly collect personal information from children.</p>
+
+    <h2>8. Changes to This Policy</h2>
+    <p>We may update this Privacy Policy from time to time. Changes will be posted on this page with an updated "Last updated" date. Continued use of the app after changes constitutes acceptance of the revised policy.</p>
+
+    <h2>9. Contact</h2>
+    <p>If you have questions about this Privacy Policy, contact us at:<br>
+    <a href="mailto:support@homecoursehero.com">support@homecoursehero.com</a></p>
+</div>
+
+<footer>
+    <div class="container">
+        <div class="footer-brand">HomeCourse Hero</div>
+        <div class="footer-links">
+            <a href="/">Home</a>
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="mailto:support@homecoursehero.com">Contact</a>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>
