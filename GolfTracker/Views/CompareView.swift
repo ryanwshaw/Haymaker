@@ -22,24 +22,24 @@ struct CompareView: View {
         return myRounds.filter { $0.courseName == course }
     }
 
-    private var myEngine: FriendStatsEngine { FriendStatsEngine(rounds: filteredMyRounds) }
-    private var theirEngine: FriendStatsEngine { FriendStatsEngine(rounds: filteredFriendRounds) }
-
     private var isCourseSelected: Bool { selectedCourse != nil }
 
     var body: some View {
+        let me = FriendStatsEngine(rounds: filteredMyRounds)
+        let them = FriendStatsEngine(rounds: filteredFriendRounds)
+
         ScrollView {
-            VStack(spacing: 18) {
-                headerCard
-                if allCourseNames.count > 1 || allCourseNames.count == 1 {
+            LazyVStack(spacing: 18) {
+                headerCard(me: me, them: them)
+                if !allCourseNames.isEmpty {
                     courseFilter
                 }
-                scoringComparison
-                statsComparison
-                insightsCard
-                holeByHoleComparison
+                scoringComparison(me: me, them: them)
+                statsComparison(me: me, them: them)
+                insightsCard(me: me, them: them)
+                holeByHoleComparison(me: me, them: them)
                 if isCourseSelected {
-                    detailedHoleBreakdown
+                    detailedHoleBreakdown(me: me, them: them)
                 }
                 Color.clear.frame(height: 16)
             }
@@ -53,13 +53,13 @@ struct CompareView: View {
 
     // MARK: - Header
 
-    private var headerCard: some View {
+    private func headerCard(me: FriendStatsEngine, them: FriendStatsEngine) -> some View {
         HStack(spacing: 0) {
             VStack(spacing: 4) {
                 playerAvatar("You", color: AppTheme.fairwayGreen)
                 Text("You")
                     .font(.caption.bold())
-                Text("\(myEngine.roundCount) rnds")
+                Text("\(me.roundCount) rnds")
                     .font(.system(size: 9))
                     .foregroundStyle(.tertiary)
             }
@@ -80,7 +80,7 @@ struct CompareView: View {
                 Text(friendName)
                     .font(.caption.bold())
                     .lineLimit(1)
-                Text("\(theirEngine.roundCount) rnds")
+                Text("\(them.roundCount) rnds")
                     .font(.system(size: 9))
                     .foregroundStyle(.tertiary)
             }
@@ -141,7 +141,7 @@ struct CompareView: View {
 
     // MARK: - Scoring Comparison
 
-    private var scoringComparison: some View {
+    private func scoringComparison(me: FriendStatsEngine, them: FriendStatsEngine) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Scoring Averages")
                 .font(.subheadline.bold())
@@ -150,23 +150,23 @@ struct CompareView: View {
 
             VStack(spacing: 0) {
                 compareRow(label: "18-Hole Avg",
-                           left: myEngine.avg18HoleScore.map { String(format: "%.1f", $0) },
-                           right: theirEngine.avg18HoleScore.map { String(format: "%.1f", $0) },
+                           left: me.avg18HoleScore.map { String(format: "%.1f", $0) },
+                           right: them.avg18HoleScore.map { String(format: "%.1f", $0) },
                            lowerIsBetter: true)
                 Divider().padding(.horizontal, 14)
                 compareRow(label: "Front 9 Avg",
-                           left: myEngine.avgFront9Score.map { String(format: "%.1f", $0) },
-                           right: theirEngine.avgFront9Score.map { String(format: "%.1f", $0) },
+                           left: me.avgFront9Score.map { String(format: "%.1f", $0) },
+                           right: them.avgFront9Score.map { String(format: "%.1f", $0) },
                            lowerIsBetter: true)
                 Divider().padding(.horizontal, 14)
                 compareRow(label: "Back 9 Avg",
-                           left: myEngine.avgBack9Score.map { String(format: "%.1f", $0) },
-                           right: theirEngine.avgBack9Score.map { String(format: "%.1f", $0) },
+                           left: me.avgBack9Score.map { String(format: "%.1f", $0) },
+                           right: them.avgBack9Score.map { String(format: "%.1f", $0) },
                            lowerIsBetter: true)
                 Divider().padding(.horizontal, 14)
                 compareRow(label: "Best 18",
-                           left: myEngine.best18HoleScore.map { "\($0)" },
-                           right: theirEngine.best18HoleScore.map { "\($0)" },
+                           left: me.best18HoleScore.map { "\($0)" },
+                           right: them.best18HoleScore.map { "\($0)" },
                            lowerIsBetter: true)
             }
             .background(AppTheme.cardBackground)
@@ -177,7 +177,7 @@ struct CompareView: View {
 
     // MARK: - Stats Comparison
 
-    private var statsComparison: some View {
+    private func statsComparison(me: FriendStatsEngine, them: FriendStatsEngine) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Performance")
                 .font(.subheadline.bold())
@@ -186,38 +186,38 @@ struct CompareView: View {
 
             VStack(spacing: 0) {
                 compareRow(label: "Avg Putts/Rnd",
-                           left: String(format: "%.1f", myEngine.avgPutts),
-                           right: String(format: "%.1f", theirEngine.avgPutts),
+                           left: String(format: "%.1f", me.avgPutts),
+                           right: String(format: "%.1f", them.avgPutts),
                            lowerIsBetter: true)
                 Divider().padding(.horizontal, 14)
                 compareRow(label: "Fairway %",
-                           left: String(format: "%.0f%%", myEngine.fairwayPct),
-                           right: String(format: "%.0f%%", theirEngine.fairwayPct),
+                           left: String(format: "%.0f%%", me.fairwayPct),
+                           right: String(format: "%.0f%%", them.fairwayPct),
                            lowerIsBetter: false)
                 Divider().padding(.horizontal, 14)
                 compareRow(label: "GIR %",
-                           left: String(format: "%.0f%%", myEngine.girPct),
-                           right: String(format: "%.0f%%", theirEngine.girPct),
+                           left: String(format: "%.0f%%", me.girPct),
+                           right: String(format: "%.0f%%", them.girPct),
                            lowerIsBetter: false)
                 Divider().padding(.horizontal, 14)
                 compareRow(label: "Birdies",
-                           left: "\(myEngine.birdieCount)",
-                           right: "\(theirEngine.birdieCount)",
+                           left: "\(me.birdieCount)",
+                           right: "\(them.birdieCount)",
                            lowerIsBetter: false)
                 Divider().padding(.horizontal, 14)
                 compareRow(label: "Pars",
-                           left: "\(myEngine.parCount)",
-                           right: "\(theirEngine.parCount)",
+                           left: "\(me.parCount)",
+                           right: "\(them.parCount)",
                            lowerIsBetter: false)
                 Divider().padding(.horizontal, 14)
                 compareRow(label: "Bogeys",
-                           left: "\(myEngine.bogeyCount)",
-                           right: "\(theirEngine.bogeyCount)",
+                           left: "\(me.bogeyCount)",
+                           right: "\(them.bogeyCount)",
                            lowerIsBetter: true)
                 Divider().padding(.horizontal, 14)
                 compareRow(label: "Double+",
-                           left: "\(myEngine.doublePlusCount)",
-                           right: "\(theirEngine.doublePlusCount)",
+                           left: "\(me.doublePlusCount)",
+                           right: "\(them.doublePlusCount)",
                            lowerIsBetter: true)
             }
             .background(AppTheme.cardBackground)
@@ -287,8 +287,8 @@ struct CompareView: View {
 
     // MARK: - Insights
 
-    private var insightsCard: some View {
-        let insights = generateInsights()
+    private func insightsCard(me: FriendStatsEngine, them: FriendStatsEngine) -> some View {
+        let insights = generateInsights(me: me, them: them)
         return VStack(alignment: .leading, spacing: 12) {
             Text("Insights")
                 .font(.subheadline.bold())
@@ -332,16 +332,16 @@ struct CompareView: View {
 
     // MARK: - Hole-by-Hole Heat Map
 
-    private var holeByHoleComparison: some View {
-        VStack(alignment: .leading, spacing: 12) {
+    private func holeByHoleComparison(me: FriendStatsEngine, them: FriendStatsEngine) -> some View {
+        let myStats = me.holeStats
+        let theirStats = them.holeStats
+        let count = max(myStats.count, theirStats.count)
+
+        return VStack(alignment: .leading, spacing: 12) {
             Text("Per-Hole Comparison")
                 .font(.subheadline.bold())
                 .foregroundStyle(.secondary)
                 .padding(.leading, 4)
-
-            let myStats = myEngine.holeStats
-            let theirStats = theirEngine.holeStats
-            let count = max(myStats.count, theirStats.count)
 
             if count > 0 {
                 let half = count / 2
@@ -391,11 +391,12 @@ struct CompareView: View {
     private func holeCompareGrid(range: Range<Int>, myStats: [FriendHoleStat], theirStats: [FriendHoleStat]) -> some View {
         let colCount = max(range.count, 1)
         return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: colCount), spacing: 4) {
-            ForEach(range, id: \.self) { i in
-                let holeNum = i + 1
-                let myStat = i < myStats.count ? myStats[i] : nil
-                let theirStat = i < theirStats.count ? theirStats[i] : nil
-                holeCompareCell(holeNumber: holeNum, myStat: myStat, theirStat: theirStat)
+            ForEach(Array(range), id: \.self) { i in
+                holeCompareCell(
+                    holeNumber: i + 1,
+                    myStat: i < myStats.count ? myStats[i] : nil,
+                    theirStat: i < theirStats.count ? theirStats[i] : nil
+                )
             }
         }
     }
@@ -441,9 +442,9 @@ struct CompareView: View {
 
     // MARK: - Detailed Hole-by-Hole Breakdown (course-specific)
 
-    private var detailedHoleBreakdown: some View {
-        let myStats = myEngine.holeStats
-        let theirStats = theirEngine.holeStats
+    private func detailedHoleBreakdown(me: FriendStatsEngine, them: FriendStatsEngine) -> some View {
+        let myStats = me.holeStats
+        let theirStats = them.holeStats
         let count = max(myStats.count, theirStats.count)
 
         return VStack(alignment: .leading, spacing: 12) {
@@ -461,19 +462,20 @@ struct CompareView: View {
             if count > 0 {
                 VStack(spacing: 0) {
                     detailedHoleHeader
-                    ForEach(0..<count, id: \.self) { i in
-                        let holeNum = i + 1
-                        let myStat = i < myStats.count ? myStats[i] : nil
-                        let theirStat = i < theirStats.count ? theirStats[i] : nil
-                        detailedHoleRow(holeNumber: holeNum, myStat: myStat, theirStat: theirStat)
+                    ForEach(Array(0..<count), id: \.self) { i in
+                        detailedHoleRow(
+                            holeNumber: i + 1,
+                            myStat: i < myStats.count ? myStats[i] : nil,
+                            theirStat: i < theirStats.count ? theirStats[i] : nil
+                        )
                         if i < count - 1 {
                             Divider().padding(.horizontal, 8)
                         }
-                        if i == 8 && count > 9 {
+                        if i == 8, count > 9 {
                             frontBackDivider("BACK 9")
                         }
                     }
-                    detailedTotalsRow
+                    detailedTotalsRow(me: me, them: them)
                 }
                 .background(AppTheme.cardBackground)
                 .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
@@ -605,9 +607,9 @@ struct CompareView: View {
         .padding(.vertical, 4)
     }
 
-    private var detailedTotalsRow: some View {
-        let myTotal = myEngine.avg18HoleScore
-        let theirTotal = theirEngine.avg18HoleScore
+    private func detailedTotalsRow(me: FriendStatsEngine, them: FriendStatsEngine) -> some View {
+        let myTotal = me.avg18HoleScore
+        let theirTotal = them.avg18HoleScore
         let diff: Double? = {
             guard let m = myTotal, let t = theirTotal else { return nil }
             return m - t
@@ -661,10 +663,10 @@ struct CompareView: View {
         let favorsUser: Bool
     }
 
-    private func generateInsights() -> [Insight] {
+    private func generateInsights(me: FriendStatsEngine, them: FriendStatsEngine) -> [Insight] {
         var insights: [Insight] = []
 
-        if let myAvg = myEngine.avg18HoleScore, let theirAvg = theirEngine.avg18HoleScore {
+        if let myAvg = me.avg18HoleScore, let theirAvg = them.avg18HoleScore {
             let diff = abs(myAvg - theirAvg)
             if diff >= 0.5 {
                 let better = myAvg < theirAvg
@@ -676,8 +678,8 @@ struct CompareView: View {
             }
         }
 
-        let fwyDiff = myEngine.fairwayPct - theirEngine.fairwayPct
-        if abs(fwyDiff) >= 3, myEngine.totalHolesPlayed > 0, theirEngine.totalHolesPlayed > 0 {
+        let fwyDiff = me.fairwayPct - them.fairwayPct
+        if abs(fwyDiff) >= 3, me.totalHolesPlayed > 0, them.totalHolesPlayed > 0 {
             let better = fwyDiff > 0
             let name = better ? "You hit" : "\(friendName) hits"
             insights.append(Insight(
@@ -686,8 +688,8 @@ struct CompareView: View {
             ))
         }
 
-        let girDiff = myEngine.girPct - theirEngine.girPct
-        if abs(girDiff) >= 3, myEngine.totalHolesPlayed > 0, theirEngine.totalHolesPlayed > 0 {
+        let girDiff = me.girPct - them.girPct
+        if abs(girDiff) >= 3, me.totalHolesPlayed > 0, them.totalHolesPlayed > 0 {
             let better = girDiff > 0
             let name = better ? "You hit" : "\(friendName) hits"
             insights.append(Insight(
@@ -696,8 +698,8 @@ struct CompareView: View {
             ))
         }
 
-        let puttDiff = myEngine.avgPutts - theirEngine.avgPutts
-        if abs(puttDiff) >= 0.5, myEngine.roundCount > 0, theirEngine.roundCount > 0 {
+        let puttDiff = me.avgPutts - them.avgPutts
+        if abs(puttDiff) >= 0.5, me.roundCount > 0, them.roundCount > 0 {
             let better = puttDiff < 0
             let name = better ? "You average" : "\(friendName) averages"
             insights.append(Insight(
@@ -706,8 +708,8 @@ struct CompareView: View {
             ))
         }
 
-        let myPar3 = myEngine.avgScoreOnPar3s
-        let theirPar3 = theirEngine.avgScoreOnPar3s
+        let myPar3 = me.avgScoreOnPar3s
+        let theirPar3 = them.avgScoreOnPar3s
         if myPar3 > 0, theirPar3 > 0, abs(myPar3 - theirPar3) >= 0.2 {
             let better = myPar3 < theirPar3
             let name = better ? "You score" : "\(friendName) scores"
@@ -717,8 +719,8 @@ struct CompareView: View {
             ))
         }
 
-        let myPar5 = myEngine.avgScoreOnPar5s
-        let theirPar5 = theirEngine.avgScoreOnPar5s
+        let myPar5 = me.avgScoreOnPar5s
+        let theirPar5 = them.avgScoreOnPar5s
         if myPar5 > 0, theirPar5 > 0, abs(myPar5 - theirPar5) >= 0.3 {
             let better = myPar5 < theirPar5
             let name = better ? "You score" : "\(friendName) scores"
@@ -729,8 +731,8 @@ struct CompareView: View {
         }
 
         if isCourseSelected {
-            let myStats = myEngine.holeStats
-            let theirStats = theirEngine.holeStats
+            let myStats = me.holeStats
+            let theirStats = them.holeStats
             var myWins = 0, theirWins = 0
             for i in 0..<min(myStats.count, theirStats.count) {
                 if myStats[i].count > 0, theirStats[i].count > 0 {

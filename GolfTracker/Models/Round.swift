@@ -8,16 +8,18 @@ final class Round {
     var notes: String
     var isComplete: Bool
     var teeRaw: String
+    var isBoozing: Bool
     var course: Course?
 
     @Relationship(deleteRule: .cascade, inverse: \HoleScore.round)
     var scores: [HoleScore] = []
 
-    init(date: Date = .now, notes: String = "", isComplete: Bool = false, tee: String = "White", course: Course? = nil) {
+    init(date: Date = .now, notes: String = "", isComplete: Bool = false, tee: String = "White", isBoozing: Bool = false, course: Course? = nil) {
         self.date = date
         self.notes = notes
         self.isComplete = isComplete
         self.teeRaw = tee
+        self.isBoozing = isBoozing
         self.course = course
     }
 
@@ -94,6 +96,17 @@ final class Round {
 
     var displayTeeColor: Color {
         GolfTracker.teeColor(for: teeRaw, in: course)
+    }
+
+    var totalDrinks: Int { scores.map(\.drinksLogged).reduce(0, +) }
+
+    var drinkBucket: String {
+        let d = totalDrinks
+        if d == 0 { return "Sober" }
+        if d <= 5 { return "1-5" }
+        if d <= 10 { return "6-10" }
+        if d <= 15 { return "11-15" }
+        return "15+"
     }
 
     var courseName: String {

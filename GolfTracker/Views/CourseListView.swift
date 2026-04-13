@@ -16,7 +16,9 @@ struct CourseListView: View {
         List {
             Section {
                 ForEach(courses) { course in
-                    courseRow(course)
+                    NavigationLink(destination: CourseDetailView(course: course)) {
+                        courseRow(course)
+                    }
                 }
             }
 
@@ -24,7 +26,7 @@ struct CourseListView: View {
                 Button {
                     showScanner = true
                 } label: {
-                    Label("Add course from scorecard", systemImage: "doc.viewfinder")
+                    Label("Add Course", systemImage: "plus.circle.fill")
                         .foregroundStyle(AppTheme.fairwayGreen)
                 }
             }

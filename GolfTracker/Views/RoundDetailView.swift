@@ -6,6 +6,8 @@ struct RoundDetailView: View {
     let round: Round
     @State private var showDeleteConfirm = false
     @State private var expandedHole: Int? = nil
+    @State private var editingRound: Round? = nil
+    @State private var showEditingRound = false
 
     var body: some View {
         ScrollView {
@@ -27,6 +29,14 @@ struct RoundDetailView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
+                    Button {
+                        round.isComplete = false
+                        try? modelContext.save()
+                        editingRound = round
+                        showEditingRound = true
+                    } label: {
+                        Label("Edit round", systemImage: "pencil")
+                    }
                     Button(role: .destructive) {
                         showDeleteConfirm = true
                     } label: {
@@ -34,6 +44,16 @@ struct RoundDetailView: View {
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
+                }
+            }
+        }
+        .fullScreenCover(isPresented: $showEditingRound) {
+            if let editRound = editingRound {
+                ActiveRoundView(round: editRound) {
+                    editRound.isComplete = true
+                    try? modelContext.save()
+                    showEditingRound = false
+                    editingRound = nil
                 }
             }
         }
@@ -67,6 +87,9 @@ struct RoundDetailView: View {
                     statRow(icon: "flag.fill", label: "Fairways", value: String(format: "%.0f%%", round.fairwayPct))
                     statRow(icon: "circle.inset.filled", label: "GIR", value: String(format: "%.0f%%", round.girPct))
                     statRow(icon: "smallcircle.filled.circle", label: "Putts", value: "\(round.totalPutts)")
+                    if round.isBoozing {
+                        statRow(icon: "wineglass.fill", label: "Drinks", value: "\(round.totalDrinks)")
+                    }
                 }
             }
         }

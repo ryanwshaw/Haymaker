@@ -26,6 +26,7 @@ final class HoleScore {
 
     // Step 4: Short game (if missed green)
     var chipClubRaw: String
+    var chipAttempts: Int
 
     // Step 5: Putts
     var firstPuttDistance: Int
@@ -33,6 +34,7 @@ final class HoleScore {
     // Trouble / extra
     var greensideBunker: Bool
     var penalties: Int
+    var drinksLogged: Int
 
     var round: Round?
 
@@ -50,9 +52,11 @@ final class HoleScore {
         approachResultRaw: String = "",
         approachClubRaw: String = "",
         chipClubRaw: String = "",
+        chipAttempts: Int = 1,
         firstPuttDistance: Int = 0,
         greensideBunker: Bool = false,
-        penalties: Int = 0
+        penalties: Int = 0,
+        drinksLogged: Int = 0
     ) {
         self.holeNumber = holeNumber
         self.score = score
@@ -67,9 +71,11 @@ final class HoleScore {
         self.approachResultRaw = approachResultRaw
         self.approachClubRaw = approachClubRaw
         self.chipClubRaw = chipClubRaw
+        self.chipAttempts = chipAttempts
         self.firstPuttDistance = firstPuttDistance
         self.greensideBunker = greensideBunker
         self.penalties = penalties
+        self.drinksLogged = drinksLogged
     }
 
     var teeClub: Club? {

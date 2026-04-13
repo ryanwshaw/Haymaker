@@ -1,32 +1,54 @@
 import SwiftUI
 
 enum AppTheme {
-    // Primary palette — pulled from the app icon
-    static let fairwayGreen = Color(red: 0.22, green: 0.44, blue: 0.18)
-    static let darkGreen = Color(red: 0.12, green: 0.28, blue: 0.10)
-    static let gold = Color(red: 0.76, green: 0.63, blue: 0.30)
-    static let goldLight = Color(red: 0.76, green: 0.63, blue: 0.30).opacity(0.12)
-    static let warmWhite = Color(red: 0.98, green: 0.97, blue: 0.94)
+    // Primary palette — Scheme 3: Sage + Mauve + Gold accent
+    static let fairwayGreen = Color(red: 0.314, green: 0.525, blue: 0.376)  // #508660 sage
+    static let darkGreen    = Color(red: 0.227, green: 0.420, blue: 0.290)  // #3a6b4a dark sage
+    static let deepGreen    = Color(red: 0.10,  green: 0.22,  blue: 0.14)   // #1a3823 for dark surfaces
+    static let mauve        = Color(red: 0.784, green: 0.678, blue: 0.733)  // #c8adbb dusty mauve
+    static let mauveLight   = Color(red: 0.784, green: 0.678, blue: 0.733).opacity(0.14)
+    static let mauveDark    = Color(red: 0.66,  green: 0.53,  blue: 0.62)   // #a8889e deeper mauve
+    static let gold         = Color(red: 0.76,  green: 0.63,  blue: 0.30)   // #C2A04D kept as accent
+    static let goldLight    = Color(red: 0.76,  green: 0.63,  blue: 0.30).opacity(0.12)
+    static let warmWhite    = Color(red: 0.96,  green: 0.95,  blue: 0.93)
 
-    // Functional — accent is the gold, used for interactive elements
-    static let accent = gold
-    static let accentLight = goldLight
+    // Functional — mauve is the primary accent; gold used for scores/special highlights
+    static let accent      = mauve
+    static let accentLight = mauveLight
 
-    // Score colors — warm palette
-    static let eagle = Color(red: 0.16, green: 0.50, blue: 0.72)
-    static let birdie = Color(red: 0.22, green: 0.56, blue: 0.24)
-    static let par = Color(.label)
-    static let bogey = Color(red: 0.80, green: 0.56, blue: 0.18)
+    // Score colors
+    static let eagle  = Color(red: 0.16, green: 0.50, blue: 0.72)
+    static let birdie = Color(red: 0.314, green: 0.525, blue: 0.376)  // sage green for birdie
+    static let par    = Color(.label)
+    static let bogey  = Color(red: 0.80, green: 0.56, blue: 0.18)
     static let double = Color(red: 0.78, green: 0.24, blue: 0.20)
 
     // Surfaces
-    static let cardBackground = Color(.systemBackground)
+    static let cardBackground  = Color(.systemBackground)
     static let subtleBackground = Color(.systemGray6)
     static let cornerRadius: CGFloat = 14
 
-    // Header gradient
+    // Gradients
     static let headerGradient = LinearGradient(
         colors: [darkGreen, fairwayGreen],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+
+    static let mauveGradient = LinearGradient(
+        colors: [mauve, mauveDark],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+
+    static let greenGradient = LinearGradient(
+        colors: [fairwayGreen, darkGreen],
+        startPoint: .leading,
+        endPoint: .trailing
+    )
+
+    static let deepGreenGradient = LinearGradient(
+        colors: [deepGreen, Color(red: 0.14, green: 0.28, blue: 0.18)],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )

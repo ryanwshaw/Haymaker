@@ -5,6 +5,7 @@ struct LocalFriendProfileView: View {
     let friend: LocalFriend
     let friendRounds: [SharedRoundSummary]
     @Query(sort: \Round.date, order: .reverse) private var myRounds: [Round]
+    @ObservedObject private var ck = CloudKitManager.shared
     @State private var selectedTee: String? = nil
 
     private var engine: FriendStatsEngine {
@@ -49,6 +50,7 @@ struct LocalFriendProfileView: View {
                 overviewCard
                 scoringBreakdown
                 heatMapSection
+                viewBadgesButton
                 compareButton
                 roundsList
                 Color.clear.frame(height: 16)
@@ -239,6 +241,40 @@ struct LocalFriendProfileView: View {
                 .foregroundStyle(stat.count > 0 ? .white : .secondary)
             }
         }
+    }
+
+    // MARK: - View Badges
+
+    private var viewBadgesButton: some View {
+        let friendBadges = ck.localFriendBadges[friend.id] ?? []
+        return NavigationLink {
+            BadgeProfileView(playerName: friend.name, badges: friendBadges)
+        } label: {
+            HStack {
+                Image(systemName: "medal.fill")
+                    .font(.body.bold())
+                Text("\(friend.name)'s Badges")
+                    .font(.subheadline.bold())
+                Spacer()
+                Text("\(friendBadges.count)")
+                    .font(.caption.bold().monospacedDigit())
+                    .foregroundStyle(.white.opacity(0.7))
+                Image(systemName: "chevron.right")
+                    .font(.caption.bold())
+                    .foregroundStyle(.white.opacity(0.5))
+            }
+            .foregroundStyle(.white)
+            .padding(16)
+            .background(
+                LinearGradient(
+                    colors: [AppTheme.gold, AppTheme.gold.opacity(0.8)],
+                    startPoint: .leading, endPoint: .trailing
+                ),
+                in: RoundedRectangle(cornerRadius: AppTheme.cornerRadius)
+            )
+            .shadow(color: AppTheme.gold.opacity(0.3), radius: 8, y: 2)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Compare Button

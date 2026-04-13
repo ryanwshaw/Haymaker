@@ -6,13 +6,25 @@ struct StatsView: View {
     @Query(sort: \Course.createdAt) private var courses: [Course]
     @State private var selectedCourse: Course? = nil
     @State private var selectedTee: String? = nil
+    @State private var selectedDrinkFilter: String? = nil
 
     private var completedRounds: [Round] {
-        let completed = allRounds.filter(\.isComplete)
+        var rounds = allRounds.filter(\.isComplete)
         if let course = selectedCourse {
-            return completed.filter { $0.course?.persistentModelID == course.persistentModelID }
+            rounds = rounds.filter { $0.course?.persistentModelID == course.persistentModelID }
         }
-        return completed
+        if let bucket = selectedDrinkFilter {
+            if bucket == "Boozing" {
+                rounds = rounds.filter { $0.isBoozing || $0.totalDrinks > 0 }
+            } else {
+                rounds = rounds.filter { $0.drinkBucket == bucket }
+            }
+        }
+        return rounds
+    }
+
+    private var hasBoozeData: Bool {
+        allRounds.filter(\.isComplete).contains(where: { $0.isBoozing || $0.totalDrinks > 0 })
     }
 
     private var engine: StatsEngine { StatsEngine.filtered(rounds: completedRounds, tee: selectedTee) }
@@ -36,6 +48,9 @@ struct StatsView: View {
                         if isSingleCourse {
                             teeFilter
                         }
+                        if hasBoozeData {
+                            drinkFilter
+                        }
                         if engine.roundCount == 0 {
                             noDataForTee
                         } else {
@@ -48,12 +63,16 @@ struct StatsView: View {
                                 heatMapSection.staggeredAppear(index: 5)
                             }
                             approachByDistanceCard.staggeredAppear(index: isSingleCourse ? 6 : 4)
+                            if hasBoozeData {
+                                boozeAnalysisCard.staggeredAppear(index: isSingleCourse ? 7 : 5)
+                            }
                             Color.clear.frame(height: 16)
                         }
                     }
                     .padding()
                     .animation(.spring(response: 0.35), value: selectedTee)
                     .animation(.spring(response: 0.35), value: selectedCourse?.persistentModelID)
+                    .animation(.spring(response: 0.35), value: selectedDrinkFilter)
                 }
             }
         }
@@ -63,29 +82,66 @@ struct StatsView: View {
     // MARK: - Empty States
 
     private var emptyState: some View {
-        VStack(spacing: 20) {
-            Spacer(minLength: 40)
+        VStack(spacing: 24) {
+            Spacer(minLength: 24)
+
             ZStack {
                 Circle()
-                    .fill(AppTheme.goldLight)
-                    .frame(width: 100, height: 100)
+                    .fill(AppTheme.fairwayGreen.opacity(0.08))
+                    .frame(width: 110, height: 110)
+                Circle()
+                    .fill(AppTheme.fairwayGreen.opacity(0.12))
+                    .frame(width: 80, height: 80)
                 Image(systemName: "chart.line.uptrend.xyaxis")
-                    .font(.system(size: 40))
-                    .foregroundStyle(AppTheme.gold)
+                    .font(.system(size: 36))
+                    .foregroundStyle(AppTheme.fairwayGreen)
                     .symbolEffect(.pulse.byLayer, options: .repeating)
             }
+
             VStack(spacing: 8) {
-                Text("No stats yet")
+                Text("Your Stats Dashboard")
                     .font(.title3.bold())
-                Text("Play a few rounds to unlock insights about your game. Stats, trends, and comparisons will appear here.")
+                Text("Log rounds to unlock deep insights into your game. Here's what you'll see:")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
+                    .padding(.horizontal, 24)
             }
+
+            VStack(spacing: 10) {
+                statsPreviewRow(icon: "number", title: "Scoring Overview", detail: "Avg score, front/back 9, best round, FWY%, GIR%")
+                statsPreviewRow(icon: "chart.xyaxis.line", title: "Scoring Trend", detail: "Round-over-round chart showing your progress")
+                statsPreviewRow(icon: "circle.grid.3x3", title: "Hole-by-Hole Heatmap", detail: "Color-coded avg to par on every hole of your course")
+                statsPreviewRow(icon: "scope", title: "Approach by Distance", detail: "GIR% in 10-yard buckets — find your sweet spot")
+                statsPreviewRow(icon: "flag.fill", title: "Tee Club Breakdown", detail: "Scoring avg and fairway % by club on each hole")
+                statsPreviewRow(icon: "wineglass.fill", title: "Booze Report", detail: "Compare your sober vs. boozy scoring averages")
+            }
+            .padding(.horizontal, 20)
+
             Spacer()
         }
         .frame(maxWidth: .infinity)
+    }
+
+    private func statsPreviewRow(icon: String, title: String, detail: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(AppTheme.mauve)
+                .frame(width: 32, height: 32)
+                .background(AppTheme.mauve.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 13, weight: .bold))
+                Text(detail)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+        }
+        .padding(12)
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
     private var noDataForTee: some View {
@@ -173,33 +229,68 @@ struct StatsView: View {
     // MARK: - Overview Card
 
     private var overviewCard: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: 0) {
             HStack {
-                Text("Overview")
-                    .font(.subheadline.bold())
-                    .foregroundStyle(.secondary)
+                HStack(spacing: 6) {
+                    Image(systemName: "chart.bar.fill")
+                        .font(.system(size: 10, weight: .bold))
+                    Text("Overview")
+                        .font(.system(size: 12, weight: .bold))
+                }
+                .foregroundStyle(.white)
                 Spacer()
                 Text("\(engine.roundCount) rounds")
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.white.opacity(0.7))
             }
-            scoringAveragesRow
-            HStack(spacing: 0) {
-                overviewStat(value: String(format: "%.1f", engine.avgPutts), label: "PUTTS/RND")
-                statDivider
-                overviewStat(value: String(format: "%.0f%%", engine.fairwayPct), label: "FWY")
-                statDivider
-                overviewStat(value: String(format: "%.0f%%", engine.girPct), label: "GIR")
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(AppTheme.deepGreenGradient)
+
+            VStack(spacing: 14) {
+                scoringAveragesRow
+                HStack(spacing: 0) {
+                    overviewStat(value: String(format: "%.1f", engine.avgPutts), label: "PUTTS/RND")
+                    statDivider
+                    overviewStat(value: String(format: "%.0f%%", engine.fairwayPct), label: "FWY")
+                    statDivider
+                    overviewStat(value: String(format: "%.0f%%", engine.girPct), label: "GIR")
+                }
+                HStack(spacing: 0) {
+                    overviewStat(value: String(format: "%.1f", engine.dropsPerRound), label: "DROPS/RND")
+                    statDivider
+                    overviewStat(value: String(format: "%.0f", engine.avgApproachDistance), label: "AVG APPR")
+                    statDivider
+                    overviewStat(value: String(format: "%.0f%%", engine.scramblePct), label: "SCRAMBLE")
+                }
+                .padding(.top, 4)
+
+                if !engine.chipAttemptBreakdown.isEmpty {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("SHORT GAME ATTEMPTS")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(.secondary)
+                        HStack(spacing: 8) {
+                            ForEach(engine.chipAttemptBreakdown) { stat in
+                                VStack(spacing: 2) {
+                                    Text(String(format: "%.0f%%", stat.pct))
+                                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                                        .foregroundStyle(stat.attempts == 1 ? AppTheme.fairwayGreen : stat.attempts >= 3 ? AppTheme.double : .orange)
+                                    Text(stat.attempts == 1 ? "1 chip" : "\(stat.attempts)x chips")
+                                        .font(.system(size: 9, weight: .semibold))
+                                        .foregroundStyle(.secondary)
+                                }
+                                .frame(maxWidth: .infinity)
+                            }
+                        }
+                    }
+                    .padding(.top, 6)
+                }
             }
-            HStack(spacing: 0) {
-                overviewStat(value: String(format: "%.1f", engine.dropsPerRound), label: "DROPS/RND")
-                statDivider
-                overviewStat(value: String(format: "%.0f", engine.avgApproachDistance), label: "AVG APPR")
-            }
-            .padding(.top, 4)
+            .padding(16)
         }
-        .padding(16)
-        .background(AppTheme.cardBackground, in: RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
+        .background(AppTheme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
         .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
     }
 
@@ -249,48 +340,6 @@ struct StatsView: View {
 
     private var statDivider: some View {
         Divider().frame(height: 32)
-    }
-
-    // MARK: - Scoring Breakdown
-
-    private var scoringBreakdown: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Scoring")
-                .font(.subheadline.bold())
-                .foregroundStyle(.secondary)
-                .padding(.leading, 4)
-
-            HStack(spacing: 0) {
-                scoreCategory(count: engine.eagleCount, label: "Eagle", color: AppTheme.eagle)
-                scoreCategory(count: engine.birdieCount, label: "Birdie", color: AppTheme.birdie)
-                scoreCategory(count: engine.parCount, label: "Par", color: Color(.systemGray3))
-                scoreCategory(count: engine.bogeyCount, label: "Bogey", color: AppTheme.bogey)
-                scoreCategory(count: engine.doublePlusCount, label: "Dbl+", color: AppTheme.double)
-            }
-            .padding(16)
-            .background(AppTheme.cardBackground, in: RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
-            .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
-        }
-    }
-
-    private func scoreCategory(count: Int, label: String, color: Color) -> some View {
-        VStack(spacing: 6) {
-            ZStack {
-                Circle()
-                    .fill(color.opacity(0.15))
-                    .frame(width: 40, height: 40)
-                Text("\(count)")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundStyle(color)
-            }
-            Text(label)
-                .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(.secondary)
-            Text(String(format: "%.0f%%", engine.scorePct(count)))
-                .font(.system(size: 9, weight: .bold).monospacedDigit())
-                .foregroundStyle(.tertiary)
-        }
-        .frame(maxWidth: .infinity)
     }
 
     // MARK: - Heat Map
@@ -375,10 +424,15 @@ struct StatsView: View {
 
     private var approachByDistanceCard: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Approach by distance")
-                .font(.subheadline.bold())
-                .foregroundStyle(.secondary)
-                .padding(.leading, 4)
+            HStack(spacing: 6) {
+                Image(systemName: "target")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(AppTheme.mauve)
+                Text("Approach by distance")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.leading, 4)
 
             let items = engine.approachByDistance
             if items.isEmpty {
@@ -435,5 +489,241 @@ struct StatsView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 11)
+    }
+
+    // MARK: - Drink Filter
+
+    private var drinkFilter: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                drinkChip(label: "All rounds", icon: nil, bucket: nil)
+                drinkChip(label: "Sober", icon: nil, bucket: "Sober")
+                drinkChip(label: "Boozing", icon: "wineglass.fill", bucket: "Boozing")
+                ForEach(["1-5", "6-10", "11-15", "15+"], id: \.self) { bucket in
+                    drinkChip(label: "\(bucket) drinks", icon: "wineglass.fill", bucket: bucket)
+                }
+            }
+        }
+    }
+
+    private func drinkChip(label: String, icon: String?, bucket: String?) -> some View {
+        let isActive = selectedDrinkFilter == bucket
+        let isBoozy = bucket != nil && bucket != "Sober"
+        return Button {
+            Haptics.selection()
+            selectedDrinkFilter = (selectedDrinkFilter == bucket) ? nil : bucket
+        } label: {
+            HStack(spacing: 5) {
+                if let icon {
+                    Image(systemName: icon)
+                        .font(.system(size: 10))
+                }
+                Text(label)
+                    .font(.subheadline.bold())
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(
+                isActive ? (isBoozy ? AppTheme.gold : AppTheme.fairwayGreen) : AppTheme.subtleBackground,
+                in: Capsule()
+            )
+            .foregroundStyle(isActive ? (isBoozy ? AppTheme.darkGreen : .white) : .primary)
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Booze Analysis Card
+
+    private var boozeAnalysisCard: some View {
+        let allCompleted = allRounds.filter(\.isComplete)
+        let boozingRounds = allCompleted.filter { $0.isBoozing || $0.totalDrinks > 0 }
+        let soberRounds = allCompleted.filter { !$0.isBoozing && $0.totalDrinks == 0 }
+        let progressEngine = StatsEngine(rounds: boozingRounds)
+        let progressData = progressEngine.scoreByDrinkProgress
+
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "wineglass.fill")
+                    .foregroundStyle(AppTheme.gold)
+                Text("Booze Report")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Text("\(boozingRounds.count) boozy / \(soberRounds.count) sober")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(.leading, 4)
+
+            // Sober vs Boozing comparison
+            VStack(spacing: 0) {
+                boozeCompareRow(label: "Avg Score",
+                    boozingVal: avgScore(boozingRounds),
+                    soberVal: avgScore(soberRounds))
+                Divider().padding(.leading, 14)
+                boozeCompareRow(label: "Avg Putts",
+                    boozingVal: avgPuttsVal(boozingRounds),
+                    soberVal: avgPuttsVal(soberRounds))
+                Divider().padding(.leading, 14)
+                boozeCompareRow(label: "FWY %",
+                    boozingVal: avgFairway(boozingRounds),
+                    soberVal: avgFairway(soberRounds))
+                Divider().padding(.leading, 14)
+                boozeCompareRow(label: "GIR %",
+                    boozingVal: avgGir(boozingRounds),
+                    soberVal: avgGir(soberRounds))
+            }
+            .background(AppTheme.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
+            .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
+
+            // Score as drinks flow through the round
+            if !progressData.isEmpty {
+                drinkProgressCard(data: progressData)
+            }
+        }
+    }
+
+    private func drinkProgressCard(data: [StatsEngine.DrinkProgressStat]) -> some View {
+        let worstAvg = data.map(\.avgScoreToPar).max() ?? 1
+        let bestAvg = data.map(\.avgScoreToPar).min() ?? 0
+        let range = max(worstAvg - bestAvg, 0.5)
+
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                Image(systemName: "chart.line.uptrend.xyaxis")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(AppTheme.gold)
+                Text("Score as drinks flow")
+                    .font(.caption.bold())
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Text("avg vs par per hole")
+                    .font(.system(size: 9))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(.horizontal, 14)
+            .padding(.top, 12)
+
+            VStack(spacing: 6) {
+                ForEach(data) { point in
+                    HStack(spacing: 10) {
+                        // Label
+                        HStack(spacing: 4) {
+                            if point.minDrinks > 0 {
+                                Image(systemName: "wineglass.fill")
+                                    .font(.system(size: 9))
+                                    .foregroundStyle(AppTheme.gold.opacity(min(0.4 + Double(point.minDrinks) * 0.12, 1.0)))
+                            } else {
+                                Image(systemName: "circle")
+                                    .font(.system(size: 9))
+                                    .foregroundStyle(.secondary)
+                            }
+                            Text(point.label)
+                                .font(.system(size: 11, weight: .semibold))
+                        }
+                        .frame(width: 72, alignment: .leading)
+
+                        // Bar
+                        GeometryReader { geo in
+                            let normalised = (point.avgScoreToPar - bestAvg) / range
+                            let barWidth = max(geo.size.width * CGFloat(normalised), 6)
+                            ZStack(alignment: .leading) {
+                                RoundedRectangle(cornerRadius: 3)
+                                    .fill(AppTheme.subtleBackground)
+                                    .frame(width: geo.size.width, height: 14)
+                                RoundedRectangle(cornerRadius: 3)
+                                    .fill(scoreProgressColor(point.avgScoreToPar))
+                                    .frame(width: barWidth, height: 14)
+                            }
+                        }
+                        .frame(height: 14)
+
+                        // Value
+                        let diff = point.avgScoreToPar
+                        Text(diff == 0 ? "E" : String(format: "%+.1f", diff))
+                            .font(.system(size: 11, weight: .bold).monospacedDigit())
+                            .foregroundStyle(scoreProgressColor(diff))
+                            .frame(width: 36, alignment: .trailing)
+
+                        // Sample count
+                        Text("\(point.count)")
+                            .font(.system(size: 9))
+                            .foregroundStyle(.quaternary)
+                            .frame(width: 20, alignment: .trailing)
+                    }
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.bottom, 12)
+        }
+        .background(AppTheme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
+        .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
+    }
+
+    private func scoreProgressColor(_ avgScoreToPar: Double) -> Color {
+        if avgScoreToPar <= -0.5 { return AppTheme.birdie }
+        if avgScoreToPar <= 0.2  { return AppTheme.fairwayGreen }
+        if avgScoreToPar <= 0.7  { return AppTheme.bogey }
+        return AppTheme.double
+    }
+
+    private func boozeCompareRow(label: String, boozingVal: Double?, soberVal: Double?) -> some View {
+        HStack {
+            Text(label)
+                .font(.subheadline.bold())
+                .frame(width: 80, alignment: .leading)
+            Spacer()
+            VStack(spacing: 1) {
+                if let v = boozingVal {
+                    Text(String(format: label.contains("%") ? "%.0f%%" : "%.1f", v))
+                        .font(.subheadline.bold().monospacedDigit())
+                } else {
+                    Text("—").font(.subheadline).foregroundStyle(.tertiary)
+                }
+                Text("BOOZY")
+                    .font(.system(size: 7, weight: .bold))
+                    .foregroundStyle(AppTheme.gold)
+            }
+            .frame(width: 60)
+            VStack(spacing: 1) {
+                if let v = soberVal {
+                    Text(String(format: label.contains("%") ? "%.0f%%" : "%.1f", v))
+                        .font(.subheadline.bold().monospacedDigit())
+                } else {
+                    Text("—").font(.subheadline).foregroundStyle(.tertiary)
+                }
+                Text("SOBER")
+                    .font(.system(size: 7, weight: .bold))
+                    .foregroundStyle(AppTheme.fairwayGreen)
+            }
+            .frame(width: 60)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+    }
+
+    private func avgScore(_ rounds: [Round]) -> Double? {
+        let full = rounds.filter(\.hasFull18)
+        guard !full.isEmpty else { return nil }
+        return Double(full.map(\.totalScore).reduce(0, +)) / Double(full.count)
+    }
+
+    private func avgPuttsVal(_ rounds: [Round]) -> Double? {
+        guard !rounds.isEmpty else { return nil }
+        return Double(rounds.map(\.totalPutts).reduce(0, +)) / Double(rounds.count)
+    }
+
+    private func avgFairway(_ rounds: [Round]) -> Double? {
+        guard !rounds.isEmpty else { return nil }
+        let total = rounds.map(\.fairwayPct).reduce(0, +)
+        return total / Double(rounds.count)
+    }
+
+    private func avgGir(_ rounds: [Round]) -> Double? {
+        guard !rounds.isEmpty else { return nil }
+        let total = rounds.map(\.girPct).reduce(0, +)
+        return total / Double(rounds.count)
     }
 }

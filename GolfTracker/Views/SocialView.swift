@@ -1,122 +1,92 @@
 import SwiftUI
 import SwiftData
-import CloudKit
 
 struct SocialView: View {
+    @Environment(\.modelContext) private var modelContext
     @ObservedObject private var ck = CloudKitManager.shared
     @Query(sort: \Round.date, order: .reverse) private var allRounds: [Round]
+    @Query(sort: \Friend.name) private var friends: [Friend]
+    @Query(filter: #Predicate<Match> { $0.isComplete }, sort: \Match.date, order: .reverse) private var completedMatches: [Match]
+
+    @ObservedObject private var auth = AuthManager.shared
+
     @State private var showAddFriend = false
-    @State private var friendCode = ""
-    @State private var lookupError: String?
+    @State private var newFriendName = ""
+    @State private var showEditName = false
+    @State private var editNameText = ""
 
     private var completedRounds: [Round] { allRounds.filter(\.isComplete) }
 
     var body: some View {
-        mainContent
-        .background(Color(.systemGroupedBackground))
-        .alert("Add Friend", isPresented: $showAddFriend) {
-            TextField("Friend code (e.g. HMK-A7X2)", text: $friendCode)
-                .textInputAutocapitalization(.characters)
-                .autocorrectionDisabled()
-            Button("Add") { searchAndAdd() }
-            Button("Cancel", role: .cancel) { }
-        } message: {
-            Text("Enter your friend's code to send a request.")
-        }
-        .alert("Error", isPresented: .init(
-            get: { lookupError != nil },
-            set: { if !$0 { lookupError = nil } }
-        )) {
-            Button("OK") { lookupError = nil }
-        } message: {
-            Text(lookupError ?? "")
-        }
-    }
-
-    // MARK: - States
-
-    private var iCloudBanner: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "icloud.slash")
-                .font(.title3)
-                .foregroundStyle(AppTheme.gold.opacity(0.6))
-            VStack(alignment: .leading, spacing: 2) {
-                Text("iCloud Unavailable")
-                    .font(.subheadline.bold())
-                Text("Sign in to iCloud for online features. Sample friends still work below.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-        }
-        .padding(14)
-        .background(AppTheme.cardBackground, in: RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
-        .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
-    }
-
-    // MARK: - Main Content
-
-    private var mainContent: some View {
         ScrollView {
             VStack(spacing: 18) {
-                if ck.iCloudAvailable {
-                    profileCard.staggeredAppear(index: 0)
-                    addFriendButton.staggeredAppear(index: 1)
-                    if !ck.pendingRequests.isEmpty {
-                        pendingRequestsCard.staggeredAppear(index: 2)
-                    }
-                } else if ck.isLoading {
-                    HStack(spacing: 10) {
-                        ProgressView()
-                        Text("Connecting to iCloud...")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                } else {
-                    iCloudBanner
+                comingSoonBanner.staggeredAppear(index: 0)
+                profileCard.staggeredAppear(index: 1)
+                myFriendsSection.staggeredAppear(index: 2)
+
+                if !completedMatches.isEmpty {
+                    recentMatchesSection.staggeredAppear(index: 3)
                 }
-                friendsCard.staggeredAppear(index: 3)
+
                 Color.clear.frame(height: 16)
             }
             .padding()
-            .animation(.spring(response: 0.35), value: ck.friends.count)
-            .animation(.spring(response: 0.35), value: ck.pendingRequests.count)
-            .animation(.spring(response: 0.35), value: ck.localFriends.count)
         }
-        .refreshable {
-            if ck.iCloudAvailable {
-                await ck.fetchFriends()
-                await ck.fetchPendingRequests()
+        .background(Color(.systemGroupedBackground))
+        .alert("Add friend", isPresented: $showAddFriend) {
+            TextField("Name", text: $newFriendName)
+            Button("Add") {
+                let name = newFriendName.trimmingCharacters(in: .whitespaces)
+                guard !name.isEmpty else { return }
+                let friend = Friend(name: name)
+                modelContext.insert(friend)
+                try? modelContext.save()
+                newFriendName = ""
+                Haptics.success()
             }
+            Button("Cancel", role: .cancel) { newFriendName = "" }
+        } message: {
+            Text("Add a friend to quickly include them in matches.")
+        }
+        .alert("Your Name", isPresented: $showEditName) {
+            TextField("Name", text: $editNameText)
+            Button("Save") {
+                auth.setCustomName(editNameText)
+                Haptics.success()
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("This name is shown on your profile and in matches.")
         }
     }
 
-    // MARK: - Add Friend Button
+    // MARK: - Coming Soon Banner
 
-    private var addFriendButton: some View {
-        Button {
-            friendCode = ""
-            lookupError = nil
-            showAddFriend = true
-        } label: {
-            HStack {
-                Image(systemName: "person.badge.plus")
-                    .font(.body.bold())
-                Text("Add Friend by Code")
-                    .font(.subheadline.bold())
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.caption.bold())
-                    .foregroundStyle(AppTheme.darkGreen.opacity(0.5))
+    private var comingSoonBanner: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "clock.badge.fill")
+                .font(.system(size: 20))
+                .foregroundStyle(AppTheme.gold)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Coming Soon")
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundStyle(AppTheme.gold)
+                Text("Live match challenges, friend leaderboards, and more.")
+                    .font(.system(size: 12, weight: .regular))
+                    .foregroundStyle(AppTheme.gold.opacity(0.8))
             }
-            .foregroundStyle(AppTheme.darkGreen)
-            .padding(16)
-            .background(AppTheme.gold, in: RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
-            .shadow(color: AppTheme.gold.opacity(0.3), radius: 6, y: 2)
+            Spacer()
         }
-        .buttonStyle(.plain)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(AppTheme.gold.opacity(0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .strokeBorder(AppTheme.gold.opacity(0.25), lineWidth: 1)
+                )
+        )
     }
 
     // MARK: - Profile Card
@@ -128,297 +98,262 @@ struct SocialView: View {
                     Circle()
                         .fill(AppTheme.fairwayGreen.opacity(0.15))
                         .frame(width: 52, height: 52)
-                    Text(String(ck.displayName.prefix(1)).uppercased())
+                    Text(String(auth.displayName.prefix(1)).uppercased())
                         .font(.system(size: 22, weight: .bold, design: .rounded))
                         .foregroundStyle(AppTheme.fairwayGreen)
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(ck.displayName)
-                        .font(.headline)
                     HStack(spacing: 6) {
-                        Text(ck.friendCode)
-                            .font(.caption.monospaced().bold())
-                            .foregroundStyle(AppTheme.fairwayGreen)
+                        Text(auth.displayName)
+                            .font(.headline)
                         Button {
-                            UIPasteboard.general.string = ck.friendCode
-                            Haptics.success()
+                            editNameText = auth.displayName == "Golfer" ? "" : auth.displayName
+                            showEditName = true
                         } label: {
-                            Image(systemName: "doc.on.doc")
-                                .font(.system(size: 11, weight: .bold))
-                                .foregroundStyle(AppTheme.gold)
+                            Image(systemName: "pencil")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundStyle(.secondary)
                         }
                         .buttonStyle(.plain)
                     }
+                    Text("\(completedRounds.count) rounds · \(completedMatches.count) matches")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
 
                 Spacer()
+            }
 
-                NavigationLink {
-                    ProfileView()
-                } label: {
-                    Image(systemName: "pencil.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(AppTheme.gold)
+            Divider()
+
+            NavigationLink {
+                BadgeProfileView(
+                    playerName: auth.displayName,
+                    badges: BadgeManager.shared.earnedBadges
+                )
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "medal.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(AppTheme.mauve)
+                    Text("My Badges")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    Text("\(BadgeManager.shared.earnedBadges.count)")
+                        .font(.subheadline.bold().monospacedDigit())
+                        .foregroundStyle(AppTheme.mauve)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(Color.gray.opacity(0.3))
                 }
             }
+            .buttonStyle(.plain)
         }
         .padding(16)
         .background(AppTheme.cardBackground, in: RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
         .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
     }
 
-    // MARK: - Pending Requests
+    // MARK: - Friends Section
 
-    private var pendingRequestsCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
+    private var myFriendsSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("Pending Requests")
+                Text("Friends (\(friends.count))")
                     .font(.subheadline.bold())
                     .foregroundStyle(.secondary)
+                    .padding(.leading, 4)
                 Spacer()
-                Text("\(ck.pendingRequests.count)")
-                    .font(.caption.bold())
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(AppTheme.double, in: Capsule())
+                NavigationLink {
+                    FriendsListView()
+                } label: {
+                    Text("Manage")
+                        .font(.caption.bold())
+                        .foregroundStyle(AppTheme.fairwayGreen)
+                }
+                .buttonStyle(.plain)
             }
-            .padding(.horizontal, 4)
 
-            VStack(spacing: 0) {
-                ForEach(Array(ck.pendingRequests.enumerated()), id: \.element.recordID) { i, request in
-                    pendingRow(request)
-                    if i < ck.pendingRequests.count - 1 {
-                        Divider().padding(.leading, 56)
+            if friends.isEmpty {
+                VStack(spacing: 14) {
+                    Image(systemName: "person.2.fill")
+                        .font(.system(size: 28))
+                        .foregroundStyle(AppTheme.mauve)
+
+                    Text("Add friends to include them in matches and track head-to-head records.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+
+                    Button {
+                        showAddFriend = true
+                        Haptics.light()
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "person.badge.plus")
+                                .font(.caption)
+                            Text("Add your first friend")
+                                .font(.caption.bold())
+                        }
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(AppTheme.fairwayGreen, in: Capsule())
                     }
+                    .buttonStyle(.plain)
                 }
-            }
-            .background(AppTheme.cardBackground)
-            .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
-            .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
-        }
-    }
-
-    private func pendingRow(_ request: CKRecord) -> some View {
-        let name = request["fromName"] as? String ?? "Someone"
-        let code = request["fromCode"] as? String ?? ""
-        return HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(AppTheme.bogey.opacity(0.12))
-                    .frame(width: 40, height: 40)
-                Text(String(name.prefix(1)).uppercased())
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundStyle(AppTheme.bogey)
-            }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(name)
-                    .font(.subheadline.bold())
-                Text(code)
-                    .font(.caption.monospaced())
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            Button {
-                Task {
-                    await ck.acceptFriendRequest(request)
-                    Haptics.success()
-                }
-            } label: {
-                Text("Accept")
-                    .font(.caption.bold())
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(AppTheme.fairwayGreen, in: Capsule())
-            }
-            .buttonStyle(.plain)
-            Button {
-                Task {
-                    await ck.declineFriendRequest(request)
-                    Haptics.medium()
-                }
-            } label: {
-                Image(systemName: "xmark")
-                    .font(.caption.bold())
-                    .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-    }
-
-    // MARK: - Friends Card
-
-    private var totalFriendCount: Int { ck.friends.count + ck.localFriends.count }
-
-    private var friendsCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Friends (\(totalFriendCount))")
-                .font(.subheadline.bold())
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 4)
-
-            if totalFriendCount == 0 {
-                emptyFriendsCard
+                .frame(maxWidth: .infinity)
+                .padding(20)
+                .background(AppTheme.cardBackground, in: RoundedRectangle(cornerRadius: 14))
+                .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
             } else {
                 VStack(spacing: 0) {
-                    ForEach(Array(ck.localFriends.enumerated()), id: \.element.id) { i, localFriend in
+                    ForEach(Array(friends.prefix(5).enumerated()), id: \.element.id) { i, friend in
                         NavigationLink {
-                            LocalFriendProfileView(
-                                friend: localFriend,
-                                friendRounds: ck.localFriendRounds[localFriend.id] ?? []
-                            )
+                            FriendDetailView(friend: friend)
                         } label: {
-                            localFriendRow(localFriend)
+                            friendRow(friend)
                         }
                         .buttonStyle(.plain)
-                        if i < ck.localFriends.count - 1 || !ck.friends.isEmpty {
+
+                        if i < min(friends.count, 5) - 1 {
                             Divider().padding(.leading, 56)
                         }
                     }
-                    ForEach(Array(ck.friends.enumerated()), id: \.element.recordID) { i, friendship in
+
+                    if friends.count > 5 {
+                        Divider()
                         NavigationLink {
-                            FriendProfileView(friendship: friendship)
+                            FriendsListView()
                         } label: {
-                            friendRow(friendship)
+                            Text("See all \(friends.count) friends")
+                                .font(.caption.bold())
+                                .foregroundStyle(AppTheme.fairwayGreen)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 10)
                         }
                         .buttonStyle(.plain)
-                        if i < ck.friends.count - 1 {
-                            Divider().padding(.leading, 56)
-                        }
                     }
                 }
                 .background(AppTheme.cardBackground)
-                .clipShape(RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
-                .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
-            }
-        }
-    }
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
 
-    private var emptyFriendsCard: some View {
-        VStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(AppTheme.fairwayGreen.opacity(0.08))
-                    .frame(width: 80, height: 80)
-                Image(systemName: "person.2.fill")
-                    .font(.system(size: 32))
-                    .foregroundStyle(AppTheme.fairwayGreen.opacity(0.5))
-                    .symbolEffect(.pulse.byLayer, options: .repeating)
-            }
-            Text("No friends yet")
-                .font(.headline)
-            Text("Add friends by code to compare scores, track each other's rounds, and see who plays each hole better.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 8)
-            if ck.localFriends.isEmpty {
                 Button {
-                    let mock = MockDataGenerator.generateMockFriend()
-                    ck.addLocalFriend(mock.friend, rounds: mock.rounds)
-                    Haptics.success()
+                    showAddFriend = true
+                    Haptics.light()
                 } label: {
                     HStack(spacing: 6) {
-                        Image(systemName: "wand.and.stars")
-                        Text("Load sample friend")
+                        Image(systemName: "plus")
+                            .font(.system(size: 10, weight: .bold))
+                        Text("Add friend")
+                            .font(.caption.bold())
                     }
-                    .font(.subheadline.bold())
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 10)
-                    .background(AppTheme.fairwayGreen, in: Capsule())
+                    .foregroundStyle(AppTheme.fairwayGreen)
+                    .frame(maxWidth: .infinity, minHeight: 40)
+                    .background(AppTheme.fairwayGreen.opacity(0.06), in: RoundedRectangle(cornerRadius: 12))
                 }
                 .buttonStyle(.plain)
             }
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 24)
-        .background(AppTheme.cardBackground, in: RoundedRectangle(cornerRadius: AppTheme.cornerRadius))
-        .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
     }
 
-    private func localFriendRow(_ friend: LocalFriend) -> some View {
-        let roundCount = ck.localFriendRounds[friend.id]?.count ?? 0
+    private func friendRow(_ friend: Friend) -> some View {
+        let matchCount = completedMatches.filter { m in m.players.contains { $0.friendId == friend.stableId } }.count
+
         return HStack(spacing: 12) {
             ZStack {
                 Circle()
                     .fill(AppTheme.eagle.opacity(0.12))
                     .frame(width: 40, height: 40)
-                Text(String(friend.name.prefix(1)).uppercased())
+                Text(friend.initial)
                     .font(.system(size: 16, weight: .bold, design: .rounded))
                     .foregroundStyle(AppTheme.eagle)
             }
             VStack(alignment: .leading, spacing: 2) {
                 Text(friend.name)
                     .font(.subheadline.bold())
-                Text("\(friend.code) · \(roundCount) rounds")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary)
+                HStack(spacing: 6) {
+                    Text("HC \(friend.defaultHandicapStrokes)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    if matchCount > 0 {
+                        Text("· \(matchCount) match\(matchCount == 1 ? "" : "es")")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
             }
             Spacer()
             Image(systemName: "chevron.right")
                 .font(.caption.bold())
-                .foregroundStyle(.quaternary)
+                .foregroundStyle(Color.gray.opacity(0.3))
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
     }
 
-    private func friendRow(_ friendship: CKRecord) -> some View {
-        let name = ck.friendDisplayName(from: friendship)
-        let code = ck.friendCodeValue(from: friendship)
+    // MARK: - Recent Matches
+
+    private var recentMatchesSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Recent Matches")
+                .font(.subheadline.bold())
+                .foregroundStyle(.secondary)
+                .padding(.leading, 4)
+
+            VStack(spacing: 0) {
+                ForEach(Array(completedMatches.prefix(5).enumerated()), id: \.element.id) { i, match in
+                    recentMatchRow(match)
+                    if i < min(completedMatches.count, 5) - 1 {
+                        Divider().padding(.leading, 56)
+                    }
+                }
+            }
+            .background(AppTheme.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .shadow(color: .black.opacity(0.04), radius: 6, y: 2)
+        }
+    }
+
+    private func recentMatchRow(_ match: Match) -> some View {
+        let otherNames = match.sortedPlayers.filter { !$0.isUser }.map(\.name).joined(separator: ", ")
+        let userScore = match.userPlayer?.totalGross ?? 0
+        let courseName = match.round?.courseName ?? ""
+
         return HStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(AppTheme.fairwayGreen.opacity(0.12))
-                    .frame(width: 40, height: 40)
-                Text(String(name.prefix(1)).uppercased())
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundStyle(AppTheme.fairwayGreen)
+                    .fill(AppTheme.mauveLight)
+                    .frame(width: 38, height: 38)
+                Image(systemName: match.gameType.icon)
+                    .font(.system(size: 14))
+                    .foregroundStyle(AppTheme.mauve)
             }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(name)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(match.gameType.displayName)
                     .font(.subheadline.bold())
-                Text(code)
-                    .font(.caption.monospaced())
+                Text("vs \(otherNames)")
+                    .font(.caption)
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                Text("\(courseName) · \(match.date.formatted(date: .abbreviated, time: .omitted))")
+                    .font(.system(size: 10))
+                    .foregroundStyle(Color.gray.opacity(0.5))
             }
+
             Spacer()
-            Image(systemName: "chevron.right")
-                .font(.caption.bold())
-                .foregroundStyle(.quaternary)
+
+            if userScore > 0 {
+                Text("\(userScore)")
+                    .font(.system(size: 16, weight: .black, design: .rounded).monospacedDigit())
+            }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-    }
-
-    // MARK: - Add Friend
-
-    private func searchAndAdd() {
-        let code = friendCode.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-        guard !code.isEmpty else { return }
-
-        if code == ck.friendCode {
-            lookupError = "That's your own friend code!"
-            return
-        }
-
-        Task {
-            guard let profile = await ck.lookupUser(byCode: code) else {
-                lookupError = "No user found with code \(code). Check the code and try again."
-                return
-            }
-
-            let success = await ck.sendFriendRequest(to: profile)
-            if success {
-                Haptics.success()
-            } else {
-                lookupError = "Failed to send friend request. Try again."
-            }
-        }
     }
 }

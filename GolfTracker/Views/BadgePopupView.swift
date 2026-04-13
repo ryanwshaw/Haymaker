@@ -14,24 +14,20 @@ struct BadgePopupView: View {
     }
 
     private var glowColor: Color {
-        switch badgeType {
-        case .doubleKill:
-            return Color(red: 1.0, green: 0.85, blue: 0.3)
-        case .shaiHulud:
-            return Color(red: 0.85, green: 0.65, blue: 0.3)
-        }
+        badgeType.isPositive
+            ? Color(red: 1.0, green: 0.85, blue: 0.3)
+            : Color(red: 0.9, green: 0.3, blue: 0.3)
     }
 
     private var titleGradient: LinearGradient {
-        switch badgeType {
-        case .doubleKill:
+        if badgeType.isPositive {
             return LinearGradient(
                 colors: [Color(red: 1.0, green: 0.85, blue: 0.3), Color(red: 0.9, green: 0.7, blue: 0.2)],
                 startPoint: .top, endPoint: .bottom
             )
-        case .shaiHulud:
+        } else {
             return LinearGradient(
-                colors: [Color(red: 0.95, green: 0.75, blue: 0.35), Color(red: 0.7, green: 0.5, blue: 0.2)],
+                colors: [Color(red: 0.95, green: 0.35, blue: 0.3), Color(red: 0.75, green: 0.2, blue: 0.2)],
                 startPoint: .top, endPoint: .bottom
             )
         }
@@ -85,30 +81,45 @@ struct BadgePopupView: View {
 
     @ViewBuilder
     private var badgeImage: some View {
-        let img = Image(badgeType.imageName)
-            .resizable()
-            .scaledToFill()
-
-        if badgeType.isCircularImage {
-            img
-                .frame(width: 140, height: 140)
-                .clipShape(Circle())
-                .overlay(
-                    Circle()
-                        .stroke(
-                            LinearGradient(
-                                colors: [Color(red: 0.85, green: 0.65, blue: 0.3), Color(red: 0.6, green: 0.4, blue: 0.15)],
-                                startPoint: .topLeading, endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 4
-                        )
-                )
-                .shadow(color: .black.opacity(0.5), radius: 10, y: 4)
+        if UIImage(named: badgeType.imageName) != nil {
+            let img = Image(badgeType.imageName)
+                .resizable()
+                .scaledToFill()
+            if badgeType.isCircularImage {
+                img
+                    .frame(width: 140, height: 140)
+                    .clipShape(Circle())
+                    .overlay(
+                        Circle()
+                            .stroke(
+                                LinearGradient(
+                                    colors: [Color(red: 0.85, green: 0.65, blue: 0.3), Color(red: 0.6, green: 0.4, blue: 0.15)],
+                                    startPoint: .topLeading, endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 4
+                            )
+                    )
+                    .shadow(color: .black.opacity(0.5), radius: 10, y: 4)
+            } else {
+                img
+                    .scaledToFit()
+                    .frame(width: 140, height: 140)
+                    .shadow(color: .black.opacity(0.4), radius: 8, y: 4)
+            }
         } else {
-            img
-                .scaledToFit()
-                .frame(width: 140, height: 140)
-                .shadow(color: .black.opacity(0.4), radius: 8, y: 4)
+            ZStack {
+                Circle()
+                    .fill(
+                        badgeType.isPositive
+                            ? AppTheme.fairwayGreen.opacity(0.25)
+                            : AppTheme.bogey.opacity(0.25)
+                    )
+                    .frame(width: 140, height: 140)
+                Image(systemName: badgeType.placeholderSymbol)
+                    .font(.system(size: 56, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+            .shadow(color: .black.opacity(0.4), radius: 8, y: 4)
         }
     }
 

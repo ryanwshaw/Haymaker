@@ -36,6 +36,12 @@ struct HoleDetailView: View {
                     } else {
                         teeToGreenPar3Card
                     }
+                    if stat.byTeeClub.count > 0 {
+                        byTeeClubCard
+                    }
+                    if stat.byTeeColor.count > 1 {
+                        byTeeColorCard
+                    }
                     if info.par != 3 {
                         approachCard
                     }
@@ -260,6 +266,135 @@ struct HoleDetailView: View {
                 bigStat(value: "\(stat.bunkerCount)", label: "BUNKERS")
                 Divider().frame(height: 36)
                 bigStat(value: "\(stat.nativeCount)", label: "NATIVE")
+            }
+        }
+    }
+
+    // MARK: - By Tee Club
+
+    private var byTeeClubCard: some View {
+        card(title: "Off the Tee by Club") {
+            VStack(spacing: 0) {
+                // Header row
+                HStack(spacing: 0) {
+                    Text("Club")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Text("Times")
+                        .frame(width: 44, alignment: .center)
+                    Text(info.par == 3 ? "GIR%" : "Fwy%")
+                        .frame(width: 48, alignment: .center)
+                    Text("Avg")
+                        .frame(width: 48, alignment: .trailing)
+                }
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(.secondary)
+                .padding(.bottom, 8)
+
+                ForEach(Array(stat.byTeeClub.enumerated()), id: \.element.id) { idx, item in
+                    if idx > 0 { Divider().padding(.vertical, 6) }
+
+                    HStack(spacing: 0) {
+                        // Club name + usage bar
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(item.clubDisplayName)
+                                .font(.system(size: 13, weight: .semibold))
+                            let maxCount = stat.byTeeClub.first?.count ?? 1
+                            GeometryReader { geo in
+                                RoundedRectangle(cornerRadius: 2)
+                                    .fill(AppTheme.fairwayGreen.opacity(0.15))
+                                    .frame(width: geo.size.width)
+                                    .overlay(alignment: .leading) {
+                                        RoundedRectangle(cornerRadius: 2)
+                                            .fill(AppTheme.fairwayGreen.opacity(0.5))
+                                            .frame(width: max(geo.size.width * CGFloat(item.count) / CGFloat(maxCount), 4))
+                                    }
+                            }
+                            .frame(height: 5)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                        Text("\(item.count)")
+                            .font(.system(size: 13, weight: .medium).monospacedDigit())
+                            .foregroundStyle(.secondary)
+                            .frame(width: 44, alignment: .center)
+
+                        // Fwy% or GIR%
+                        let pct = info.par == 3 ? item.girPct : item.fairwayPct
+                        if pct < 0 {
+                            Text("—")
+                                .font(.system(size: 13).monospacedDigit())
+                                .foregroundStyle(.secondary)
+                                .frame(width: 48, alignment: .center)
+                        } else {
+                            Text(String(format: "%.0f%%", pct))
+                                .font(.system(size: 13, weight: .semibold).monospacedDigit())
+                                .foregroundStyle(pct >= 50 ? AppTheme.fairwayGreen : AppTheme.bogey)
+                                .frame(width: 48, alignment: .center)
+                        }
+
+                        // Avg score to par
+                        let diff = item.avgScoreToPar
+                        Text(diff == 0 ? "E" : String(format: "%+.1f", diff))
+                            .font(.system(size: 13, weight: .bold).monospacedDigit())
+                            .foregroundStyle(AppTheme.scoreColor(Int(diff.rounded())))
+                            .frame(width: 48, alignment: .trailing)
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - By Tee Color
+
+    private var byTeeColorCard: some View {
+        card(title: "Scoring by Tee") {
+            VStack(spacing: 0) {
+                // Header row
+                HStack(spacing: 0) {
+                    Text("Tee")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Text("Rounds")
+                        .frame(width: 56, alignment: .center)
+                    Text("Avg Score")
+                        .frame(width: 72, alignment: .center)
+                    Text("vs Par")
+                        .frame(width: 52, alignment: .trailing)
+                }
+                .font(.system(size: 10, weight: .bold))
+                .foregroundStyle(.secondary)
+                .padding(.bottom, 8)
+
+                ForEach(Array(stat.byTeeColor.enumerated()), id: \.element.id) { idx, item in
+                    if idx > 0 { Divider().padding(.vertical, 6) }
+
+                    HStack(spacing: 0) {
+                        // Tee color dot + name
+                        HStack(spacing: 8) {
+                            Circle()
+                                .fill(GolfTracker.teeColor(for: item.teeName, in: course))
+                                .frame(width: 9, height: 9)
+                                .overlay(Circle().stroke(Color(.systemGray4), lineWidth: 0.5))
+                            Text(item.teeName)
+                                .font(.system(size: 13, weight: .semibold))
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                        Text("\(item.count)")
+                            .font(.system(size: 13, weight: .medium).monospacedDigit())
+                            .foregroundStyle(.secondary)
+                            .frame(width: 56, alignment: .center)
+
+                        Text(String(format: "%.1f", item.avgScore))
+                            .font(.system(size: 13, weight: .semibold).monospacedDigit())
+                            .frame(width: 72, alignment: .center)
+
+                        let diff = item.avgScoreToPar
+                        Text(diff == 0 ? "E" : String(format: "%+.1f", diff))
+                            .font(.system(size: 13, weight: .bold).monospacedDigit())
+                            .foregroundStyle(AppTheme.scoreColor(Int(diff.rounded())))
+                            .frame(width: 52, alignment: .trailing)
+                    }
+                }
             }
         }
     }
